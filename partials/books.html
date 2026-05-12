@@ -1,0 +1,21 @@
+<div class="stats-row books-overview-stats" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:20px;">
+  <div class="stat-card"><div class="stat-icon-row"><div class="stat-icon green">📚</div></div><div class="stat-value" id="stat-total-copies">0</div><div class="stat-label">Total copies in library</div><div class="stat-sub" id="stat-total-titles">0 titles</div></div>
+  <div class="stat-card"><div class="stat-icon-row"><div class="stat-icon purple">✅</div></div><div class="stat-value" id="stat-available-books">0</div><div class="stat-label">Books currently available</div><div class="stat-sub">Across all titles</div></div>
+  <div class="stat-card"><div class="stat-icon-row"><div class="stat-icon blue">📈</div></div><div class="stat-value stat-value-text" id="stat-most-borrowed">—</div><div class="stat-label">Most borrowed book</div><div class="stat-sub" id="stat-most-borrowed-meta"></div></div>
+</div>
+
+<details class="card section-toggle" style="margin-bottom:14px;">
+  <summary class="card-header section-toggle-head"><div class="card-title">Book Inventory</div><div class="card-subtitle" id="books-count">0 books</div></summary>
+  <div class="card-body">
+    <div class="toolbar"><input type="text" class="search-bar" id="book-search" placeholder="Search by title, ID, barcode, author, or category..." oninput="filterBooks()"><button type="button" class="btn btn-ghost btn-sm" onclick="focusBookSearchByBarcode()" title="Clear search, focus the field, then scan a book barcode">Scan barcode to search</button><button class="btn btn-green" onclick="openAddBookModal()">+ Add Book</button></div>
+    <div style="padding:0 8px"><table class="data-table"><thead><tr><th>ID</th><th>Title</th><th>Barcode</th><th>Author</th><th>Category</th><th>Qty</th><th>Available</th><th>Status</th><th>Actions</th></tr></thead><tbody id="books-tbody"></tbody></table></div>
+  </div>
+</details>
+
+<details class="card section-toggle">
+  <summary class="card-header section-toggle-head"><div class="card-title">All Transactions</div><div class="card-subtitle" id="tx-count">0 total</div></summary>
+  <div class="card-body">
+    <div class="toolbar"><input type="text" class="search-bar" id="tx-search" placeholder="Search transactions..." oninput="filterTx()"><button class="btn btn-blue" onclick="openManualCheckout()">Manual Checkout</button><button class="btn btn-green" onclick="openManualReturn()">Manual Return</button></div>
+    <div style="padding:0 8px"><table class="data-table"><thead><tr><th>Student</th><th>Book ID</th><th>Title</th><th>Type</th><th>Date</th><th>Due Date</th><th>Status</th></tr></thead><tbody id="tx-tbody"></tbody></table></div>
+  </div>
+</details>

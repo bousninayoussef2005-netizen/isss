@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f8fa">
+  <title>SmartLib — IoT Library Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="toast" class="toast"></div>
+<div id="modal-overlay" class="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal"><div class="modal-header"><div class="modal-title" id="modal-title"></div><button class="modal-close" onclick="closeModal()">✕</button></div><div class="modal-body" id="modal-body"></div><div class="modal-footer" id="modal-footer"></div></div>
+</div>
+
+<!-- AUTH -->
+<div id="login-screen" class="login-screen">
+  <div class="login-container">
+    <div class="login-brand"><div class="login-logo">📚</div><h1>SmartLib</h1><p>IoT Library Management System</p></div>
+    <div class="role-toggle">
+      <button class="role-btn active" id="role-student-btn" onclick="switchRole('student')">🎓 Student</button>
+      <button class="role-btn" id="role-staff-btn" onclick="switchRole('staff')">🔑 Staff</button>
+    </div>
+    <div id="student-auth">
+      <div class="auth-toggle">
+        <button class="auth-btn active" id="stu-signin-btn" onclick="switchAuthMode('signin')">Sign In</button>
+        <button class="auth-btn" id="stu-signup-btn" onclick="switchAuthMode('signup')">Sign Up</button>
+      </div>
+      <div class="login-card">
+        <div id="student-signin">
+          <div class="form-group"><label>Email</label><input type="email" id="si-email" placeholder="Your registered email"></div>
+          <div class="form-group"><label>Password</label><input type="password" id="si-pw" placeholder="Enter password"></div>
+          <button class="login-btn" onclick="studentSignIn()">Sign In</button>
+        </div>
+        <div id="student-signup" style="display:none">
+          <div class="form-group"><label>School</label><div class="institution-toggle"><label><input type="radio" name="su-institution" id="su-inst-medtech" value="MEDTECH" checked onchange="updateSignupInstitutionUI()"> MedTech</label><label><input type="radio" name="su-institution" id="su-inst-msb" value="MSB" onchange="updateSignupInstitutionUI()"> MSB</label></div></div>
+          <div class="form-group"><label>Full Name</label><input type="text" id="su-name" placeholder="e.g. Youssef Bousnina"></div>
+          <div class="form-group"><label>Email</label><input type="email" id="su-email" placeholder="name@medtech.tn"></div>
+          <div class="form-row">
+            <div class="form-group"><label>Student ID</label><input type="text" id="su-id" placeholder="123-4567" inputmode="numeric" autocomplete="off" maxlength="8"></div>
+            <div class="form-group" id="su-dept-wrap"><label>Department</label><select id="su-dept"><option value="">Select...</option><option value="CSE">CSE</option><option value="SE">SE</option><option value="RE">RE</option></select></div>
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="su-pw" placeholder="Min 6 characters" autocomplete="new-password">
+            <button type="button" class="pw-toggle-btn" id="su-pw-toggle" onclick="toggleSignupPassword()">Show password</button>
+          </div>
+          <button class="login-btn" onclick="studentSignUp()">Create Account</button>
+        </div>
+        <div id="login-error" class="login-error"></div>
+      </div>
+    </div>
+    <div id="staff-auth" style="display:none">
+      <div class="login-card">
+        <div class="form-group"><label>Staff Email</label><input type="email" id="staff-email" placeholder="admin@smartlib.edu"></div>
+        <div class="form-group"><label>Password</label><input type="password" id="staff-pw" placeholder="Enter password"></div>
+        <button class="login-btn" onclick="loginStaff()">Sign In as Staff</button>
+        <div id="login-error-staff" class="login-error"></div>
+      </div>
+    </div>
+    <div class="login-hint">Staff: <code>admin@smartlib.edu</code> / <code>admin123</code> · Student sign-up: MedTech (<code>@medtech.tn</code> + dept) or MSB (<code>@msb.tn</code>); ID <code>###-####</code> for both.</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-shell" class="app-shell">
+  <div class="header">
+    <div class="header-left"><div class="logo">📚</div><h1>SmartLib <span>/ <span id="header-section">Dashboard</span></span></h1></div>
+    <div class="header-right">
+      <div class="status-pill"><div class="status-dot"></div> Online</div>
+      <div class="user-info"><div class="user-name" id="display-name"></div><div class="user-role" id="display-role"></div></div>
+      <button class="logout-btn" onclick="logout()">Log out</button>
+    </div>
+  </div>
+  <div class="tab-row" id="tab-row"></div>
+  <div class="main" id="main-content"></div>
+</div>
+
+<script src="js/state.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/tabs.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/seats.js"></script>
+<script src="js/books.js"></script>
+<script src="js/transactions.js"></script>
+<script src="js/students.js"></script>
+<script src="js/alerts-issues.js"></script>
+<script src="js/student-books.js"></script>
+<script type="module" src="Firebase.js"></script>
+</body>
+</html>

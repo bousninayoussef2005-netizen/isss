@@ -1,0 +1,11 @@
+<div class="stats-row">
+  <div class="stat-card"><div class="stat-icon-row"><div class="stat-icon green">🪑</div></div><div class="stat-value" id="seats-free-count">0</div><div class="stat-label">Available</div><div class="stat-sub" id="seats-total-count">of 0 seats</div></div>
+  <div class="stat-card"><div class="stat-icon-row"><div class="stat-icon amber">⏱️</div></div><div class="stat-value" id="seats-active-timers">0</div><div class="stat-label">Active Timers</div><div class="stat-sub">students away</div></div>
+  <div class="stat-card"><div class="stat-icon-row"><div class="stat-icon blue">📅</div></div><div class="stat-value" id="seats-reservations">0</div><div class="stat-label">Reservations</div><div class="stat-sub">pending</div></div>
+  <div class="stat-card"><div class="stat-icon-row"><div class="stat-icon purple">📊</div></div><div class="stat-value" id="seats-current-load">0%</div><div class="stat-label">Current Load</div><div class="stat-sub">occupancy</div></div>
+</div>
+<div class="grid-2col">
+  <div class="card"><div class="card-header"><div class="card-title">Seat Map</div><div class="card-actions"><button class="btn btn-green btn-sm" onclick="openAddSeatModal()">+ Add Seat</button></div></div><div class="card-body"><div class="seats-grid" id="admin-seats"></div></div></div>
+  <div class="card"><div class="card-header"><div class="card-title">Active Timers</div><div class="card-subtitle" id="timers-label"></div></div><div class="card-body" id="admin-timers"></div></div>
+</div>
+<div class="card"><div class="card-header"><div class="card-title">Busiest Hours (Today)</div></div><div class="card-body"><div class="chart-bar-container" id="hourly-chart"></div></div></div>
