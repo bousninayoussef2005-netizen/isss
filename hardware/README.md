@@ -6,6 +6,7 @@ Step-by-step docs and Pi / ESP32 helpers for the **lab edge** (Raspberry Pi + ES
 |-----|------------|
 | [PHASE0.md](./PHASE0.md) | Seat / RFID / book barcode mapping + Pi Python version; checklist |
 | [PHASE1.md](./PHASE1.md) | ESP32 ↔ Pi **serial proof** (USB or UART) |
+| [PHASE2.md](./PHASE2.md) | Pi **serial bridge** — JSON lines → Firestore (`serial_bridge.py`) |
 | [pi/MANUAL-SETUP.md](./pi/MANUAL-SETUP.md) | Pi-only: folders, `pi-config.local.json`, venv, Firestore **smoke_test** (no `setup_pi.sh`) |
 | [pi/README.md](./pi/README.md) | Pi folder overview + optional `setup_pi.sh` |
 
@@ -13,6 +14,7 @@ Step-by-step docs and Pi / ESP32 helpers for the **lab edge** (Raspberry Pi + ES
 
 - **Phase 0 — spec:** tables filled (RFID, seats, books); Pi **Python 3.13.5**; config + Firebase key on device; **`smoke_test.py` → Firestore OK**.
 - **Phase 1 — serial:** **Done** — ESP32 @ **`/dev/ttyUSB0`**, `Phase1SerialPing` + **`serial_listen.py`** printing JSON ping lines.
+- **Phase 2 — bridge:** **In progress** — follow **[PHASE2.md](./PHASE2.md)**; run **`serial_bridge.py`** with **`--dry-run`**, then live writes to **`kiosk_auth_events`** / **`seats`**.
 
 ## Layout on the Pi (reference)
 
@@ -23,6 +25,7 @@ Step-by-step docs and Pi / ESP32 helpers for the **lab edge** (Raspberry Pi + ES
   bin/
     smoke_test.py
     serial_listen.py
+    serial_bridge.py
   secrets/
     firebase-adminsdk.json   (or your chosen key filename — path must match JSON)
 ```

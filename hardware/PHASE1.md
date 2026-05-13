@@ -90,7 +90,7 @@ Stop with **Ctrl+C**.
 - [x] Correct **`serial.port_linux`** in `pi-config.local.json` (e.g. **`/dev/ttyUSB0`**).
 - [x] ESP32 sketch running; Pi **`serial_listen.py`** prints clean JSON lines (ping) without crashes.
 
-**Next (Phase 2, later):** parse JSON on the Pi (`t` == `rfid`, `fsr`, …) and call Firestore (Admin SDK) using the same config + key you already verified.
+**Next — Phase 2:** **[PHASE2.md](./PHASE2.md)** — **`serial_bridge.py`**: parse JSON on the Pi (`t` == `ping` / `rfid` / `fsr`) and call Firestore (Admin SDK) using the same config + key you already verified. Start with **`--dry-run`**.
 
 ---
 
