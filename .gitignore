@@ -1,0 +1,4 @@
+# Local Pi / Firebase secrets (never commit)
+hardware/pi-config.local.json
+**/serviceAccount*.json
+**/*firebase-adminsdk*.json
