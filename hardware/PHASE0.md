@@ -1,6 +1,6 @@
 # Phase 0 — Freeze the spec
 
-**Lab status:** Firestore checks and Pi config are **working** (`smoke_test.py` → **Firestore OK**). Optional: fill **§1 row 1** GPIO text for seat 1 in this file. **Next:** **[PHASE1.md](./PHASE1.md)** (ESP32 ↔ Pi serial).
+**Lab status:** Firestore checks and Pi config are **working** (`smoke_test.py` → **Firestore OK**). **Phase 1 serial:** ESP32 → Pi on **`/dev/ttyUSB0`**, JSON ping lines OK. Optional: fill **§1 row 1** GPIO for seat 1. **Next:** Phase 2 — parse serial JSON + Firestore writes (when you are ready).
 
 ---
 
@@ -173,7 +173,8 @@ Replace paths with yours.
 
 **Next**
 
-- **[Phase 1 — serial pipe](./PHASE1.md):** ESP32 → Pi JSON lines (`serial_listen.py`).
+- **Phase 1 — serial:** **Done** — see **[PHASE1.md](./PHASE1.md)** Step 6.
+- **Phase 2 (later):** on the Pi, parse JSON from `serial_listen` and call Firestore (RFID / FSR / seat updates) using the same Admin key.
 
 Phase 0 **spec + Pi read access** is done for your current milestone; finish §1 row 1 whenever you document seat 1’s pin.
 

@@ -87,8 +87,8 @@ Stop with **Ctrl+C**.
 
 ## Step 6 — Exit criteria (Phase 1 done)
 
-- [ ] Correct **`serial.port_linux`** in `pi-config.local.json`.
-- [ ] ESP32 sketch running; Pi **`serial_listen.py`** prints clean JSON lines for several minutes without crashes.
+- [x] Correct **`serial.port_linux`** in `pi-config.local.json` (e.g. **`/dev/ttyUSB0`**).
+- [x] ESP32 sketch running; Pi **`serial_listen.py`** prints clean JSON lines (ping) without crashes.
 
 **Next (Phase 2, later):** parse JSON on the Pi (`t` == `rfid`, `fsr`, …) and call Firestore (Admin SDK) using the same config + key you already verified.
 

@@ -12,7 +12,7 @@ Step-by-step docs and Pi / ESP32 helpers for the **lab edge** (Raspberry Pi + ES
 ## Status (update as you go)
 
 - **Phase 0 — spec:** tables filled (RFID, seats, books); Pi **Python 3.13.5**; config + Firebase key on device; **`smoke_test.py` → Firestore OK**.
-- **Phase 1 — serial:** follow **PHASE1.md**; use **`hardware/esp32/Phase1SerialPing/`** + **`hardware/pi/serial_listen.py`**.
+- **Phase 1 — serial:** **Done** — ESP32 @ **`/dev/ttyUSB0`**, `Phase1SerialPing` + **`serial_listen.py`** printing JSON ping lines.
 
 ## Layout on the Pi (reference)
 
