@@ -19,11 +19,12 @@
     "999EB402": "564-6616"
   },
   "test_barcodes": {
-    "borrow_test": "52145645",
-    "return_test": "REPLACE_AFTER_VERIFY_IN_FIRESTORE"
+    "great_expectations": "9782070793143",
+    "l_enfant": "9781853260049",
+    "the_american": "9780140390827"
   },
   "timeouts_seconds": {
     "barcode_then_rfid": 10
   },
-  "notes": "Seat 2 FSR: ESP32 GPIO35. RFID: 93BA9456→241-7504 (verify), 31FC9616→656-5454, 999EB402→564-6616. VERIFY seats/barcode in Firebase. Copy to pi-config.local.json on the Pi only."
+  "notes": "Books: Great Expectations 9782070793143 (BK-006 VERIFY), L'ENFANT 9781853260049, The American 9780140390827 — paste Firestore book ids for new titles after Add Book. Seat 2 FSR: GPIO35. RFID map unchanged. Copy to pi-config.local.json on the Pi only."
 }

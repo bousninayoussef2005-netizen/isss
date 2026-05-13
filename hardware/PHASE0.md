@@ -41,13 +41,15 @@ For **each** FSR / seat channel on the ESP32, record how it maps to a document i
 
 ## 3) Test book barcodes
 
-Pick **2–3** books from Firestore **`books`**. Copy **`id`** and **`barcode`** exactly as stored (and test what the **USB scanner** actually types into a text editor).
+Use Firestore **`books`** rows: field **`barcode`** must match what the **USB scanner** sends (character for character). After **Staff → Add Book**, copy each document’s **`id`** (`BK-…`) into the first column if you started with TBD.
 
-| Book `id` | `barcode` (exact string from scanner) | Notes |
-|-----------|----------------------------------------|--------|
-| `BK-002` | `52145645` | From your Firestore book sample — **VERIFY** barcode still matches doc + scanner output |
-| `BK-006` | *paste from Firestore `books` row for BK-006* | Borrow sample referenced `BK-006` / Great Expectations — **VERIFY** |
-| *optional third* | | |
+| Book `id` | `barcode` (exact string from scanner) | Title / author (for you) |
+|-----------|----------------------------------------|---------------------------|
+| `BK-006` *(VERIFY — or replace with actual `id` in your project)* | `9782070793143` | Great Expectations |
+| *Paste `id` from Firestore after adding the book* | `9781853260049` | L'ENFANT — Jules Vales |
+| *Paste `id` from Firestore after adding the book* | `9780140390827` | The American — Henry James |
+
+**Removed from active tests:** older sample `BK-002` / `52145645` — keep that doc in Firestore if you still use it; add a row here again if needed.
 
 **Check:** If the scanner adds a prefix/suffix or lowercase, either fix scanner programming or normalize in Pi code **on purpose** (document that choice here).
 
