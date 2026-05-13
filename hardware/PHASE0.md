@@ -1,6 +1,6 @@
 # Phase 0 — Freeze the spec
 
-**Draft status:** Firestore **verification** for seats, RFID, and test books is complete (see §5). Remaining: optional **§1 seat 1 GPIO** line in this file, **Python version** when the Pi exists, and **`pi-config.local.json`** on the Pi — then move to **Phase 1** (serial).
+**Lab status:** Firestore checks and Pi config are **working** (`smoke_test.py` → **Firestore OK**). Optional: fill **§1 row 1** GPIO text for seat 1 in this file. **Next:** **[PHASE1.md](./PHASE1.md)** (ESP32 ↔ Pi serial).
 
 ---
 
@@ -165,12 +165,15 @@ Replace paths with yours.
 
 **Still to do**
 
-- [ ] **§1 row 1:** Replace `*fill when wired*` with your **actual GPIO / ADC label** for seat 1 in this file *(skip only if seat 1 uses the same doc as above but you intentionally keep the placeholder)*.
-- [ ] **Pi:** Run **`hardware/pi/setup_pi.sh`** (see **`hardware/pi/README.md`**), add **`~/smartlib/secrets/firestore-key.json`**, run **`smoke_test.py`**; never commit secrets (see `.gitignore`).
+- [ ] **§1 row 1:** Replace `*fill when wired*` with your **actual GPIO / ADC label** for seat 1 in this file *(optional documentation only)*.
+
+**Completed (Pi / Firebase)**
+
+- [x] **Pi:** `~/smartlib/pi-config.local.json` + **`firebase-adminsdk.json`** (or equivalent key path in config); **`smoke_test.py`** reports **Firestore OK**.
 
 **Next**
 
-- **Phase 1:** ESP32 ↔ Raspberry Pi **serial** (hello line / JSON events).
+- **[Phase 1 — serial pipe](./PHASE1.md):** ESP32 → Pi JSON lines (`serial_listen.py`).
 
-When the **Still to do** boxes are checked, close Phase 0 in the repo and start **Phase 1**.
+Phase 0 **spec + Pi read access** is done for your current milestone; finish §1 row 1 whenever you document seat 1’s pin.
 

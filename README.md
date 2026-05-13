@@ -380,6 +380,7 @@ Then open the printed URL (e.g. `http://localhost:3000`).
 | `js/students.js` | Staff student list / presence |
 | `js/*.js` | Alerts, issues, transactions, utils |
 | `partials/*.html` | HTML fragments for tabs |
+| `hardware/README.md` | Pi + ESP32 phases (**PHASE0**, **PHASE1**), `hardware/pi/`, `hardware/esp32/` |
 
 ---
 

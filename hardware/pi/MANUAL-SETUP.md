@@ -1,5 +1,7 @@
 # Raspberry Pi — manual setup (no `setup_pi.sh`)
 
+**Status:** If **`smoke_test.py`** already prints **Firestore OK**, you can skip to **[../PHASE1.md](../PHASE1.md)** for ESP32 serial.
+
 Do everything **on the Pi** in a terminal. User is **`pi`**. If your username is different, replace `/home/pi` with your home path.
 
 Your Firebase key file name here: **`firebase-adminsdk.json`** inside `~/smartlib/secrets/`.

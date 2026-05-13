@@ -2,7 +2,9 @@
 
 Run everything **on the Pi** (SSH or local terminal). Do **not** commit `~/smartlib/secrets/*.json` to Git.
 
-**Do not want the script?** Follow **[MANUAL-SETUP.md](./MANUAL-SETUP.md)** — copy-paste only, step by step.
+- **Phase 1 (serial):** follow **[../PHASE1.md](../PHASE1.md)** and use **`serial_listen.py`** in this folder.  
+- **Manual install (no script):** **[MANUAL-SETUP.md](./MANUAL-SETUP.md)**  
+- **Optional script:** `setup_pi.sh` below
 
 ## 1) Get these files onto the Pi
 
