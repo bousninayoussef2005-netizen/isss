@@ -26,5 +26,6 @@
   "timeouts_seconds": {
     "barcode_then_rfid": 10
   },
-  "notes": "Verified: seats seat_1/seat_2; RFID 93BA9456→241-7504, 31FC9616→656-5454, 999EB402→564-6616; books BK-006/007/008 ISBNs. Seat 1 GPIO: add to pi-config.local.json when wired. Copy to Pi; never commit secrets."
+  "firebase_credentials_path": null,
+  "notes": "Set firebase_credentials_path only in pi-config.local.json on the Pi (absolute path to service account JSON). Template keeps null. Verified: seats, RFID, books. Seat 1 GPIO in local if needed. Never commit secrets."
 }
