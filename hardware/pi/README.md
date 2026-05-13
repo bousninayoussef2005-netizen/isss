@@ -4,7 +4,7 @@ Run everything **on the Pi** (SSH or local terminal). Do **not** commit `~/smart
 
 - **Phase 1 (serial):** follow **[../PHASE1.md](../PHASE1.md)** and use **`serial_listen.py`** in this folder.  
 - **Phase 2 (Firestore bridge):** follow **[../PHASE2.md](../PHASE2.md)** — copy **`serial_bridge.py`** to `~/smartlib/bin/` (or run from the repo), then **`--dry-run`** then live. **After it works:** install **`smartlib-serial-bridge.service.example`** as a **systemd** service (PHASE2 Step 7a).
-- **Phase 3 (kiosk rules, Pi + Firestore):** **[../PHASE3.md](../PHASE3.md)** — **`kiosk_worker.py`** uses the same Admin key; polls **`pi_worker_state: pending`** on **`kiosk_auth_events`**.
+- **Phase 3 (kiosk rules, Pi + Firestore):** **[../PHASE3.md](../PHASE3.md)** — **`kiosk_worker.py`** + optional **`barcode_hid_to_kiosk.py`** for a **USB scanner** on the Pi (HID or serial).
 - **Manual install (no script):** **[MANUAL-SETUP.md](./MANUAL-SETUP.md)**  
 - **Optional script:** `setup_pi.sh` below
 

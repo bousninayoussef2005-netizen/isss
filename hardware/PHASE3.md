@@ -10,7 +10,8 @@
 
 | Layer | Responsibility |
 |--------|----------------|
-| **ESP32** | Sensors → JSON lines (`ping`, `rfid`, `fsr`). |
+| **ESP32** | Sensors → JSON lines on **USB serial** (`ping`, `rfid`, `fsr`). |
+| **USB barcode scanner** | Usually **HID keyboard** on the Pi → use **`barcode_hid_to_kiosk.py`** (or USB-serial mode). Same Firestore queue as a **`barcode`** JSON line. |
 | **`serial_bridge.py`** | Serial → Firestore **`kiosk_auth_events`** (`rfid_scan`, **`barcode_scan`**, …) and **`seats`**. RFID / barcode rows use **`pi_worker_state: "pending"`**. |
 | **`kiosk_worker.py`** | Poll **`pending`** → **borrow/return** (same rules as **`Firebase.js`**) → **`transactions`** + **`books`** → mark **`done`** / **`error`**. |
 | **Website** | Staff / student UI unchanged at first; later you can hide duplicate flows if the kiosk is fully automated. |
@@ -30,6 +31,40 @@ chmod +x ~/smartlib/bin/kiosk_worker.py
 ```
 
 Ensure **`serial_bridge.py`** on the Pi is **updated** (RFID rows must include **`pi_worker_state": "pending"`**). Pull from Git or re-`wget` **`serial_bridge.py`**.
+
+---
+
+## Step 1b — USB barcode scanner on the Pi (HID keyboard)
+
+The ESP32 **serial** line is only for the microcontroller. A **USB scanner** that pretends to be a keyboard does **not** go through that cable, so **`serial_bridge.py` never sees it**.
+
+Use **`barcode_hid_to_kiosk.py`**: it reads **`/dev/input/event*`** **key scancodes** (digits + Enter), so you get **correct numbers** even when the desktop layout would show “weird” characters.
+
+```bash
+sudo apt install python3-evdev
+sudo usermod -aG input $USER
+# log out and back in (or reboot)
+
+wget -qO ~/smartlib/bin/barcode_hid_to_kiosk.py \
+  https://raw.githubusercontent.com/bousninayoussef2005-netizen/isss/main/hardware/pi/barcode_hid_to_kiosk.py
+
+python3 ~/smartlib/bin/barcode_hid_to_kiosk.py --list
+python3 ~/smartlib/bin/barcode_hid_to_kiosk.py --config ~/smartlib/pi-config.local.json --device /dev/input/eventN
+```
+
+If your scanner is **USB-serial** (shows as **`/dev/ttyACM1`** etc.), put in **`pi-config.local.json`**:
+
+```json
+"barcode_serial": { "port_linux": "/dev/ttyACM1", "baud": 9600 }
+```
+
+and run:
+
+```bash
+python3 ~/smartlib/bin/barcode_hid_to_kiosk.py --config ~/smartlib/pi-config.local.json --mode serial
+```
+
+Run this script **alongside** **`serial_bridge`** and **`kiosk_worker`** (three processes, or three systemd units).
 
 ---
 
@@ -90,5 +125,6 @@ Defaults match **`Firebase.js`** (`MAX_ACTIVE_BORROWS = 3`, 14-day due). **`pyth
 | Path | Role |
 |------|------|
 | `hardware/pi/kiosk_worker.py` | Pi: **`kiosk_auth_events`** queue → **borrow/return** → **`transactions`** + **`books`**. |
-| `hardware/pi/serial_bridge.py` | **`rfid`** / **`barcode`** / **`fsr`** → Firestore. |
+| `hardware/pi/serial_bridge.py` | **`rfid`** / **`barcode`** / **`fsr`** → Firestore (ESP32 serial). |
+| `hardware/pi/barcode_hid_to_kiosk.py` | Pi: **USB HID** or **USB-serial** scanner → **`kiosk_auth_events`** (`barcode_scan`). |
 | `hardware/PHASE3.md` | This guide |
