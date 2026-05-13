@@ -112,7 +112,7 @@ Stop: **Ctrl+C**.
 
 ## Step 5 — ESP32 firmware beyond `ping`
 
-Phase 1 sketch only sends **`ping`**. For Phase 2 you extend firmware to send **`rfid`** / **`fsr`** when hardware fires:
+Phase 1 sketch only sends **`ping`**. For Phase 2 you extend firmware to send **`rfid`** / **`fsr`** when hardware fires. A **reference implementation** is in the repo: **`hardware/esp32/Phase2SerialJson/Phase2SerialJson.ino`** (RC522 + two FSR channels on GPIO 34/35 by default — change the `#define`s if your wiring differs).
 
 1. **RFID:** when the library gives you a UID string, send **one line**:  
    `{"t":"rfid","uid":"<HEX>"}`  
