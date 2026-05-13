@@ -85,6 +85,8 @@ pip install firebase-admin pyserial
 
 ### B) `pi-config.local.json` and Firebase service account (on the Pi only)
 
+**Quick path (recommended):** on the Pi, open **`hardware/pi/README.md`** and run **`setup_pi.sh`** — it creates `~/smartlib/`, the venv, and `pi-config.local.json`; you only add the Firebase JSON key. The manual steps below are the same process in long form.
+
 1. **Firebase Console** → Project **settings** (gear) → **Service accounts** → **Generate new private key** → download a `.json` file (often named like `*-firebase-adminsdk-*.json`).
 
 2. On the Pi, create a folder for secrets (example):
@@ -164,7 +166,7 @@ Replace paths with yours.
 **Still to do**
 
 - [ ] **§1 row 1:** Replace `*fill when wired*` with your **actual GPIO / ADC label** for seat 1 in this file *(skip only if seat 1 uses the same doc as above but you intentionally keep the placeholder)*.
-- [ ] **Pi:** Copy `hardware/pi-config.template.json` → **`pi-config.local.json`** on the Raspberry Pi, align with this doc, configure Firebase **service account** path; **never commit** secrets (see `.gitignore`).
+- [ ] **Pi:** Run **`hardware/pi/setup_pi.sh`** (see **`hardware/pi/README.md`**), add **`~/smartlib/secrets/firestore-key.json`**, run **`smoke_test.py`**; never commit secrets (see `.gitignore`).
 
 **Next**
 
