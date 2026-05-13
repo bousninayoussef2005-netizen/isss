@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "pi_runtime": "python",
+  "serial": {
+    "port_linux": "/dev/ttyUSB0",
+    "baud": 115200,
+    "line_delimiter": "\n"
+  },
+  "barcode_serial": {
+    "port_linux": "/dev/ttyUSB1",
+    "baud": 9600
+  },
+  "seat_index_to_seat_id": {
+    "1": "seat_1",
+    "2": "seat_2"
+  },
+  "seat_index_to_esp_gpio": {
+    "2": 35
+  },
+  "rfid_uid_to_student_id": {
+    "93BA9456": "241-7504",
+    "31FC9616": "656-5454",
+    "999EB402": "564-6616"
+  },
+  "test_barcodes": {
+    "great_expectations": "9782070793143",
+    "l_enfant": "9781853260049",
+    "the_american": "9780140390827"
+  },
+  "timeouts_seconds": {
+    "barcode_then_rfid": 10
+  },
+  "kiosk": {
+    "max_active_borrows": 3,
+    "borrow_due_days": 14
+  },
+  "firebase_credentials_path": "/home/pi/smartlib/secrets/firebase-adminsdk.json",
+  "notes": "Pi only — do not commit. ESP32 = serial.port_linux. USB-serial scanner = barcode_serial. Adjust ports/baud if your ls /dev/ttyUSB* differs."
+}
