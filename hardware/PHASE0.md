@@ -1,6 +1,6 @@
 # Phase 0 — Freeze the spec
 
-Complete this **before** writing ESP32 or Raspberry Pi code. Copy values from **Firebase Console → Firestore** and from your **physical labels** (tape on cables / seat numbers).
+**Draft status:** Tables below are **partially filled** from your SmartLib Firestore screenshots and this repo. Anything marked **VERIFY** or **PENDING_SCAN** must be corrected in **Firebase Console** or by **scanning tags** before you trust it in production.
 
 ---
 
@@ -8,66 +8,71 @@ Complete this **before** writing ESP32 or Raspberry Pi code. Copy values from **
 
 For **each** FSR / seat channel on the ESP32, record how it maps to a document in the `seats` collection.
 
-**How to read Firestore:**
+**How to read Firestore:** Firestore → `seats` → each document’s **Document ID** and field **`id`**.
 
-1. Open **Firestore → `seats`**.
-2. For each document, note **Document ID** (often `seat_1`, `S003`, …) and the field **`id`** inside the document (shown on the map in SmartLib).
+| # | Physical label (tape on chair / cable) | ESP32 channel / wire label | Firestore **document ID** | Field **`id`** (if different from doc ID) |
+|---|----------------------------------------|-----------------------------|-----------------------------|-------------------------------------------|
+| 1 | Chair / FSR #1 | *fill when wired* e.g. `ADC1` / `GPIO34` | `seat_1` | `seat_1` (VERIFY) |
+| 2 | Chair / FSR #2 | *fill when wired* | `seat_2` | `seat_2` (VERIFY) |
+| 3 | *(add a row per extra FSR)* | | | |
 
-| # | Physical label (your choice) | ESP32 channel / wire label | Firestore **document ID** | Field **`id`** (if different from doc ID) |
-|---|------------------------------|----------------------------|-----------------------------|-------------------------------------------|
-| 1 | | ADC0 / GPIO … | | |
-| 2 | | | | |
-| 3 | | | | |
-| _add rows_ | | | | |
+**Notes:**
 
-**Rule for the Pi later:** one stable key per chair, e.g. `seat_index` 1…N in JSON from the ESP32, maps to **exactly one** Firestore `seats` document (use `firebaseId` = document ID in code paths).
+- Your console showed documents **`seat_1`** and **`seat_2`** with `id` matching — **confirm** in your project today (IDs might be `S001` style elsewhere).
+- When the ESP32 sends `seat_index: 1`, the Pi will map to Firestore document id **`seat_1`** (or whatever you lock in the last column).
 
 ---
 
 ## 2) RFID tag UID → Student id
 
-Use **hex UID** as printed by your RFID library (define convention: **uppercase**, no spaces, e.g. `E3A1B2C4`).
+**Convention:** UID = **uppercase hex**, no spaces (match your RFID library output).
 
-| RFID UID (hex) | Firestore `students` document id (= `id` field) | Student name (for you, not for code) |
-|----------------|---------------------------------------------------|----------------------------------------|
-| | | |
-| | | |
-| | | |
+**PENDING_SCAN:** Run a small RFID read sketch once per tag; paste the UID here.
 
-**How to fill:** scan each tag once with a test sketch or phone NFC app if applicable; match to the student row in **`students`**.
+| RFID UID (hex) | Firestore `students` document id (= `id` field) | Student name (for you) |
+|----------------|--------------------------------------------------|--------------------------|
+| `PENDING_SCAN_TAG_1` | `241-7504` | Youssef Bousnina (VERIFY id in `students`) |
+| `PENDING_SCAN_TAG_2` | *e.g. second test student id* | *name* |
+| `PENDING_SCAN_TAG_3` | | |
+
+**Notes:**
+
+- `241-7504` appeared in your **`seats`** / **`transactions`** sample data — **open `students`** and confirm that document exists and matches the person holding tag 1.
+- Replace `PENDING_SCAN_TAG_*` with real hex (example shape: `E3D4A1B2C90F`).
 
 ---
 
 ## 3) Test book barcodes
 
-Pick **2–3 books** in Firestore **`books`** where you know **`barcode`** and **`id`**.
+Pick **2–3** books from Firestore **`books`**. Copy **`id`** and **`barcode`** exactly as stored (and test what the **USB scanner** actually types into a text editor).
 
-| Book `id` (e.g. BK-002) | `barcode` (exact string scanner will send) | Notes |
-|-------------------------|---------------------------------------------|--------|
-| | | |
-| | | |
+| Book `id` | `barcode` (exact string from scanner) | Notes |
+|-----------|----------------------------------------|--------|
+| `BK-002` | `52145645` | From your Firestore book sample — **VERIFY** barcode still matches doc + scanner output |
+| `BK-006` | *paste from Firestore `books` row for BK-006* | Borrow sample referenced `BK-006` / Great Expectations — **VERIFY** |
+| *optional third* | | |
 
-**Check:** Scanner output must match **`barcode`** character-for-character (including leading zeros). Trim only if you explicitly decide that in Pi code.
+**Check:** If the scanner adds a prefix/suffix or lowercase, either fix scanner programming or normalize in Pi code **on purpose** (document that choice here).
 
 ---
 
 ## 4) Pi runtime (pick one)
 
-Check **one** box and use it for all Pi services:
+Check **one** box:
 
-- [ ] **Python 3** + `firebase-admin` + `pyserial` (common for Pi + GPIO/serial tutorials)
-- [ ] **Node.js** + `firebase-admin` + `serialport` (fine if you prefer JS end-to-end)
+- [x] **Python 3** + `firebase-admin` + `pyserial` *(recommended default for Pi)*  
+- [ ] **Node.js** + `firebase-admin` + `serialport`
 
-**Chosen:** _________________________  **Version:** _________________________
+**Chosen:** Python 3 **Version:** *(e.g. 3.11 — fill when Pi is set up)* _______________
 
 ---
 
 ## 5) Copy-paste checklist (done = Phase 0 complete)
 
-- [ ] Every **wired seat** has a row in table **1**.
-- [ ] Every **RFID tag** you will use in demos has a row in table **2**.
-- [ ] At least **two** books in table **3** (one for borrow tests, one optional second).
-- [ ] **Pi language** decided in section **4**.
-- [ ] Optional: duplicate table **1** and **2** into `hardware/pi-config.template.json` (rename to `pi-config.local.json` on the Pi, **never commit** secrets).
+- [ ] Table **1**: every **wired FSR** has a row; Firestore doc ids **verified** in console.
+- [ ] Table **2**: every demo **RFID UID** is **real hex** (no `PENDING_SCAN_*`), student ids exist in **`students`**.
+- [ ] Table **3**: barcodes **typed once with scanner** into Notepad and match Firestore.
+- [ ] Section **4**: Pi language + version recorded.
+- [ ] Copy filled seat + RFID map into **`pi-config.local.json`** on the Pi (never commit; see `.gitignore`).
 
-When this file is filled, Phase 0 is done — proceed to **Phase 1** (ESP32 ↔ Pi serial pipe).
+When the checklist is done, Phase 0 is complete → **Phase 1** (ESP32 ↔ Pi serial).

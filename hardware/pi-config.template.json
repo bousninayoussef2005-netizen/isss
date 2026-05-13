@@ -7,18 +7,19 @@
     "line_delimiter": "\n"
   },
   "seat_index_to_seat_id": {
-    "1": "REPLACE_WITH_FIRESTORE_SEAT_DOC_ID_OR_LOGICAL_ID",
-    "2": "REPLACE"
+    "1": "seat_1",
+    "2": "seat_2"
   },
   "rfid_uid_to_student_id": {
-    "REPLACE_UID_HEX_UPPERCASE": "000-0000"
+    "PENDING_SCAN_TAG_1": "241-7504",
+    "PENDING_SCAN_TAG_2": "REPLACE_STUDENT_ID"
   },
   "test_barcodes": {
-    "borrow_test": "REPLACE_EXACT_BARCODE_FROM_BOOKS_COLLECTION",
-    "return_test": "REPLACE_OPTIONAL_SECOND_BARCODE"
+    "borrow_test": "52145645",
+    "return_test": "REPLACE_AFTER_VERIFY_IN_FIRESTORE"
   },
   "timeouts_seconds": {
     "barcode_then_rfid": 10
   },
-  "notes": "Copy this file to the Raspberry Pi as pi-config.local.json and fill real values. Do not commit pi-config.local.json or Firebase service account JSON."
+  "notes": "VERIFY seat_1/seat_2 and BK-002 barcode in Firebase Console. Replace PENDING_SCAN_* with real RFID UIDs. Copy to pi-config.local.json on the Pi only."
 }
