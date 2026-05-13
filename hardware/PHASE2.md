@@ -134,9 +134,54 @@ Phase 1 sketch only sends **`ping`**. For Phase 2 you extend firmware to send **
 
 ---
 
-## Step 7 — Later hardening (not required to “finish” Phase 2)
+## Step 7 — Hardening (do this next once the bridge works)
 
-- Run the bridge under **`systemd`** so it restarts on boot / crash.
+### Step 7a — Run the bridge under **systemd** (survives reboot / SSH disconnect)
+
+1. **Stop** any manual bridge you left running (**Ctrl+C** in that terminal), or the serial port stays open and the service will fail.
+
+2. Copy the unit file from this repo (adjust the **source path** if your clone lives elsewhere):
+
+```bash
+cd /path/to/isss/hardware/pi
+sudo cp smartlib-serial-bridge.service.example /etc/systemd/system/smartlib-serial-bridge.service
+```
+
+Or download without a full clone:
+
+```bash
+sudo wget -qO /etc/systemd/system/smartlib-serial-bridge.service \
+  https://raw.githubusercontent.com/bousninayoussef2005-netizen/isss/main/hardware/pi/smartlib-serial-bridge.service.example
+```
+
+3. **Edit** if your Linux user is not **`pi`** or your home is not **`/home/pi`** — set **`User=`**, **`Group=`**, **`WorkingDirectory=`**, **`Environment=HOME=`**, and every **`/home/pi/...`** path in **`ExecStart=`** to match (or keep one user `pi` and use that account for SmartLib).
+
+4. Enable and start:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now smartlib-serial-bridge.service
+sudo systemctl status smartlib-serial-bridge.service
+```
+
+5. **Watch logs** (should show `[bridge] LIVE` and handler lines, not immediate exit):
+
+```bash
+journalctl -u smartlib-serial-bridge -f
+```
+
+6. **If status shows “failed”** — often **serial busy** (another process), **wrong `User`** (cannot read the key file or `/dev/ttyUSB0`), or **missing `SupplementaryGroups=dialout`**. Fix, then `sudo systemctl restart smartlib-serial-bridge.service`.
+
+**Disable** (go back to manual runs only):
+
+```bash
+sudo systemctl disable --now smartlib-serial-bridge.service
+```
+
+---
+
+### Step 7b — Later (optional)
+
 - Add **logging** to a file under `~/smartlib/log/`.
 - Add **rate limits** and **invalid JSON** counters.
 - Map **`rfid`** → real **seat / borrow** business rules (Phase 3+).
@@ -148,4 +193,5 @@ Phase 1 sketch only sends **`ping`**. For Phase 2 you extend firmware to send **
 | Path | Role |
 |------|------|
 | `hardware/pi/serial_bridge.py` | Pi: serial → parse JSON → Firestore |
+| `hardware/pi/smartlib-serial-bridge.service.example` | **systemd** unit — install on Pi (see Step 7a) |
 | `hardware/PHASE2.md` | This guide |

@@ -3,7 +3,7 @@
 Run everything **on the Pi** (SSH or local terminal). Do **not** commit `~/smartlib/secrets/*.json` to Git.
 
 - **Phase 1 (serial):** follow **[../PHASE1.md](../PHASE1.md)** and use **`serial_listen.py`** in this folder.  
-- **Phase 2 (Firestore bridge):** follow **[../PHASE2.md](../PHASE2.md)** — copy **`serial_bridge.py`** to `~/smartlib/bin/` (or run from the repo), then **`--dry-run`** then live.  
+- **Phase 2 (Firestore bridge):** follow **[../PHASE2.md](../PHASE2.md)** — copy **`serial_bridge.py`** to `~/smartlib/bin/` (or run from the repo), then **`--dry-run`** then live. **After it works:** install **`smartlib-serial-bridge.service.example`** as a **systemd** service (PHASE2 Step 7a).
 - **Manual install (no script):** **[MANUAL-SETUP.md](./MANUAL-SETUP.md)**  
 - **Optional script:** `setup_pi.sh` below
 

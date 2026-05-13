@@ -1,0 +1,38 @@
+# SmartLib — run serial_bridge.py as a system service on the Raspberry Pi.
+#
+# Before install:
+#   1) Paths below assume user "pi" and home /home/pi — change User= and paths if yours differ.
+#   2) serial_bridge.py must exist at ~/smartlib/bin/serial_bridge.py (same as manual Phase 2).
+#   3) Stop any manual "python ... serial_bridge.py" first, or the serial port will be busy.
+#
+# Install (on the Pi):
+#   sudo cp smartlib-serial-bridge.service.example /etc/systemd/system/smartlib-serial-bridge.service
+#   sudo nano /etc/systemd/system/smartlib-serial-bridge.service   # fix User/paths if needed
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now smartlib-serial-bridge.service
+#
+# Logs:
+#   journalctl -u smartlib-serial-bridge -f
+#
+# Stop / disable:
+#   sudo systemctl stop smartlib-serial-bridge.service
+#   sudo systemctl disable smartlib-serial-bridge.service
+
+[Unit]
+Description=SmartLib serial JSON to Firestore bridge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+SupplementaryGroups=dialout
+WorkingDirectory=/home/pi/smartlib
+Environment=HOME=/home/pi
+ExecStart=/home/pi/smartlib/venv/bin/python /home/pi/smartlib/bin/serial_bridge.py --config /home/pi/smartlib/pi-config.local.json
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
