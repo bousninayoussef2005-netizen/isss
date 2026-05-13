@@ -174,3 +174,19 @@ Put the right device in `serial.port_linux` inside `~/smartlib/pi-config.local.j
 ```
 
 Never `git add` the `secrets` folder or `pi-config.local.json` from the Pi into a public repo.
+
+---
+
+## Troubleshooting
+
+**`JSONDecodeError: Expecting value: line 1 column 1`** — almost always means **`pi-config.local.json` is empty or not valid JSON**.
+
+**Tell the Pi:**
+
+```bash
+wc -c ~/smartlib/pi-config.local.json
+cat -A ~/smartlib/pi-config.local.json | head -5
+```
+
+If `wc -c` prints `0` or the file looks wrong, **delete and recreate** Step 3 in this document (`rm ~/smartlib/pi-config.local.json` then paste the `cat <<EOF` block again). Make sure you paste the **entire** heredoc and that the closing line is exactly **`EOF`** alone at the start of the line (no spaces before `EOF`).
+

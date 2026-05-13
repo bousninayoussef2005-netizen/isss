@@ -21,7 +21,19 @@ def main() -> int:
     if not cfg_path.is_file():
         print(f"Missing config: {cfg_path}", file=sys.stderr)
         return 2
-    cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+    raw = cfg_path.read_text(encoding="utf-8-sig")
+    if not raw.strip():
+        print(
+            f"Config file is empty: {cfg_path}\n"
+            "Recreate it (see hardware/pi/MANUAL-SETUP.md Step 3) or run: cat ~/smartlib/pi-config.local.json",
+            file=sys.stderr,
+        )
+        return 2
+    try:
+        cfg = json.loads(raw)
+    except json.JSONDecodeError as e:
+        print(f"Invalid JSON in {cfg_path}: {e}\nFirst 200 characters:\n{raw[:200]!r}", file=sys.stderr)
+        return 2
     cred_path = cfg.get("firebase_credentials_path")
     if not cred_path or not isinstance(cred_path, str):
         print("Config missing string firebase_credentials_path", file=sys.stderr)
