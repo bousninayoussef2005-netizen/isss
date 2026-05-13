@@ -43,8 +43,22 @@ def init_db(cfg: dict):
     return firestore.client()
 
 
+def _pending_query(db, limit: int):
+    """Firestore query for rows the Pi worker should handle."""
+    try:
+        from google.cloud.firestore_v1.base_query import FieldFilter
+
+        return (
+            db.collection("kiosk_auth_events")
+            .where(filter=FieldFilter("pi_worker_state", "==", "pending"))
+            .limit(limit)
+        )
+    except ImportError:
+        return db.collection("kiosk_auth_events").where("pi_worker_state", "==", "pending").limit(limit)
+
+
 def process_batch(db, *, dry_run: bool, limit: int, firestore_mod) -> int:
-    q = db.collection("kiosk_auth_events").where("pi_worker_state", "==", "pending").limit(limit)
+    q = _pending_query(db, limit)
     n = 0
     for snap in q.stream():
         n += 1
@@ -87,6 +101,14 @@ def main() -> int:
     if args.once or args.dry_run:
         n = process_batch(db, dry_run=args.dry_run, limit=args.batch, firestore_mod=firestore_mod)
         print(f"[worker] processed {n} document(s)", flush=True)
+        if n == 0:
+            print(
+                "[worker] hint: no rows with pi_worker_state==\"pending\". "
+                "New RFID scans only get that field if ~/smartlib/bin/serial_bridge.py is updated, "
+                "then: sudo systemctl restart smartlib-serial-bridge.service — then scan a tag again.",
+                file=sys.stderr,
+                flush=True,
+            )
         return 0
 
     print(f"[worker] loop every {args.poll_seconds}s (Ctrl+C to stop)", flush=True)
