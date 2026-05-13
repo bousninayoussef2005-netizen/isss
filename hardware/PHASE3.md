@@ -34,37 +34,46 @@ Ensure **`serial_bridge.py`** on the Pi is **updated** (RFID rows must include *
 
 ---
 
-## Step 1b — USB barcode scanner on the Pi (HID keyboard)
+## Step 1b — USB barcode scanner on the Pi
 
-The ESP32 **serial** line is only for the microcontroller. A **USB scanner** that pretends to be a keyboard does **not** go through that cable, so **`serial_bridge.py` never sees it**.
+The ESP32 uses **`serial.port_linux`** (e.g. **`/dev/ttyUSB0`**). A **second** USB device is usually your **USB-serial** scanner (e.g. **`/dev/ttyUSB1`**). It does **not** send data on the ESP32 cable, so use **`barcode_hid_to_kiosk.py --mode serial`** (same Firestore queue as a JSON **`barcode`** line from the bridge).
 
-Use **`barcode_hid_to_kiosk.py`**: it reads **`/dev/input/event*`** **key scancodes** (digits + Enter), so you get **correct numbers** even when the desktop layout would show “weird” characters.
+1. Find the scanner device:
 
 ```bash
-sudo apt install python3-evdev
-sudo usermod -aG input $USER
-# log out and back in (or reboot)
+ls /dev/ttyUSB* /dev/ttyACM* 2>/dev/null
+```
+
+Unplug the scanner, run again, plug it in — the **new** path is the scanner.
+
+2. Add to **`~/smartlib/pi-config.local.json`** (example — use **your** path and baud from the scanner manual):
+
+```json
+"barcode_serial": {
+  "port_linux": "/dev/ttyUSB1",
+  "baud": 9600
+}
+```
+
+3. Install script and run (**`dialout`** group so you can open the port):
+
+```bash
+sudo usermod -aG dialout $USER
+# log out and back in
 
 wget -qO ~/smartlib/bin/barcode_hid_to_kiosk.py \
   https://raw.githubusercontent.com/bousninayoussef2005-netizen/isss/main/hardware/pi/barcode_hid_to_kiosk.py
 
-python3 ~/smartlib/bin/barcode_hid_to_kiosk.py --list
-python3 ~/smartlib/bin/barcode_hid_to_kiosk.py --config ~/smartlib/pi-config.local.json --device /dev/input/eventN
-```
-
-If your scanner is **USB-serial** (shows as **`/dev/ttyACM1`** etc.), put in **`pi-config.local.json`**:
-
-```json
-"barcode_serial": { "port_linux": "/dev/ttyACM1", "baud": 9600 }
-```
-
-and run:
-
-```bash
 python3 ~/smartlib/bin/barcode_hid_to_kiosk.py --config ~/smartlib/pi-config.local.json --mode serial
 ```
 
-Run this script **alongside** **`serial_bridge`** and **`kiosk_worker`** (three processes, or three systemd units).
+Override without editing JSON: **`--port /dev/ttyUSB1 --baud 115200`**.
+
+Run this **alongside** **`serial_bridge`** (ESP32) and **`kiosk_worker`** — three processes.
+
+### HID “keyboard” scanner (optional)
+
+If the scanner is **keyboard emulation** instead of serial, use **`--mode hid`**, **`python3-evdev`**, and **`--list`** / **`--device /dev/input/eventN`** (reads raw scancodes so layout does not corrupt digits). See script header comments.
 
 ---
 

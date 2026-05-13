@@ -6,6 +6,10 @@
     "baud": 115200,
     "line_delimiter": "\n"
   },
+  "barcode_serial": {
+    "port_linux": "/dev/ttyUSB1",
+    "baud": 9600
+  },
   "seat_index_to_seat_id": {
     "1": "seat_1",
     "2": "seat_2"
@@ -31,5 +35,5 @@
     "borrow_due_days": 14
   },
   "firebase_credentials_path": "__SMARTLIB_HOME__/secrets/firestore-key.json",
-  "notes": "Generated on Pi by setup_pi.sh. Never commit this file if copied into a git repo."
+  "notes": "ESP32 on serial.port_linux (e.g. ttyUSB0). USB-serial barcode scanner: set barcode_serial to the other tty (e.g. ttyUSB1) and run barcode_hid_to_kiosk.py --mode serial. Never commit secrets."
 }

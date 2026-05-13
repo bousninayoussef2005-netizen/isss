@@ -6,6 +6,10 @@
     "baud": 115200,
     "line_delimiter": "\n"
   },
+  "barcode_serial": {
+    "port_linux": "/dev/ttyUSB1",
+    "baud": 9600
+  },
   "seat_index_to_seat_id": {
     "1": "seat_1",
     "2": "seat_2"

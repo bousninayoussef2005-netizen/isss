@@ -2,24 +2,22 @@
 """
 USB barcode scanner on the Raspberry Pi → same Firestore queue as serial_bridge barcode lines.
 
-HID "keyboard" scanners send key *scancodes*. This program reads /dev/input/event* directly, so
-digits are correct even when X11/console keyboard layout would show wrong characters.
+**USB-serial (your case):** the scanner shows as a **second** serial device, e.g. **`/dev/ttyUSB1`**
+while the ESP32 uses **`/dev/ttyUSB0`**. Add **`barcode_serial`** to **`pi-config.local.json`**, then run
+**`--mode serial`**. Find the port with **`ls /dev/ttyUSB*`** (unplug scanner, list, plug, list again).
+Set **`baud`** from the manual (often **9600** or **115200**).
 
-Install on the Pi:
-  sudo apt install python3-evdev
-  sudo usermod -aG input $USER   # then log out / reboot
-  # optional: sudo usermod -aG plugdev $USER
+**USB HID "keyboard" scanner:** use **`--mode hid`** + **`python3-evdev`**; reads raw digit keys so keyboard
+layout does not corrupt ISBNs.
 
-List devices:
-  python3 barcode_hid_to_kiosk.py --list
+Install (HID only):  sudo apt install python3-evdev && sudo usermod -aG input $USER  # relog
 
-Run (pick your scanner device):
-  python3 barcode_hid_to_kiosk.py --config ~/smartlib/pi-config.local.json --device /dev/input/event0
+List HID:  python3 barcode_hid_to_kiosk.py --list
 
-Optional: USB-serial scanner (plain text line per scan) in pi-config.local.json:
-  "barcode_serial": { "port_linux": "/dev/ttyACM1", "baud": 9600 }
-Then:
-  python3 barcode_hid_to_kiosk.py --config ~/smartlib/pi-config.local.json --mode serial
+Serial:  python3 barcode_hid_to_kiosk.py --config ~/smartlib/pi-config.local.json --mode serial
+         python3 barcode_hid_to_kiosk.py --config ... --mode serial --port /dev/ttyUSB1 --baud 9600
+
+HID:     python3 barcode_hid_to_kiosk.py --config ... --mode hid --device /dev/input/eventN
 
 See hardware/PHASE3.md.
 """
@@ -168,7 +166,11 @@ def run_serial(cfg: dict, db, *, dry_run: bool, intent_default: str) -> int:
     port = bs.get("port_linux")
     baud = int(bs.get("baud") or 9600)
     if not port:
-        print('Config needs "barcode_serial": { "port_linux": "/dev/ttyACM1", "baud": 9600 }', file=sys.stderr)
+        print(
+            'Config needs barcode_serial.port_linux (or pass --port). Example in pi-config.local.json:\n'
+            '  "barcode_serial": { "port_linux": "/dev/ttyUSB1", "baud": 9600 }',
+            file=sys.stderr,
+        )
         return 2
 
     print(f"[barcode-hid] serial {port} @ {baud}", flush=True)
@@ -216,8 +218,10 @@ def pick_default_hid_device() -> str | None:
 def main() -> int:
     ap = argparse.ArgumentParser(description="SmartLib Pi — HID or serial barcode → kiosk_auth_events")
     ap.add_argument("--config", default=str(Path.home() / "smartlib" / "pi-config.local.json"))
-    ap.add_argument("--mode", choices=("hid", "serial"), default="hid")
+    ap.add_argument("--mode", choices=("hid", "serial"), default="serial")
     ap.add_argument("--device", default="", help="HID: /dev/input/eventN (default: auto-guess)")
+    ap.add_argument("--port", default="", help="serial: override barcode_serial.port_linux (e.g. /dev/ttyUSB1)")
+    ap.add_argument("--baud", type=int, default=0, help="serial: override barcode_serial.baud (0 = use config)")
     ap.add_argument("--intent", default="borrow", choices=("borrow", "return"))
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--list", action="store_true", help="List /dev/input/event* names and exit")
@@ -233,8 +237,15 @@ def main() -> int:
         db = init_db(cfg)
 
     if args.mode == "serial":
+        cfg_merged = dict(cfg)
+        bs = dict(cfg.get("barcode_serial") or {})
+        if args.port.strip():
+            bs["port_linux"] = args.port.strip()
+        if args.baud > 0:
+            bs["baud"] = args.baud
+        cfg_merged["barcode_serial"] = bs
         try:
-            run_serial(cfg, db, dry_run=args.dry_run, intent_default=args.intent)
+            run_serial(cfg_merged, db, dry_run=args.dry_run, intent_default=args.intent)
         except KeyboardInterrupt:
             print("\n[barcode-hid] stopped", flush=True)
         return 0
