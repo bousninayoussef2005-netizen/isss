@@ -62,7 +62,7 @@ Check **one** box:
 - [x] **Python 3** + `firebase-admin` + `pyserial` *(recommended default for Pi)*  
 - [ ] **Node.js** + `firebase-admin` + `serialport`
 
-**Chosen:** Python 3 **Version:** *(fill after step A below)* _______________
+**Chosen:** Python 3 **Version:** `3.13.5` *(on Raspberry Pi; confirm `pip install firebase-admin pyserial` succeeds in your venv)*.
 
 ### A) Fill the Python version (§4 line above)
 
@@ -159,12 +159,11 @@ Replace paths with yours.
 - [x] Table **2** — **Youssef:** tag `93BA9456` ↔ **`241-7504`** confirmed against Firestore **`students`**.
 - [x] Table **3** — **`BK-006`**, **`BK-007`**, **`BK-008`** verified in Firestore; §3 table updated with final ids and ISBNs.
 - [x] Table **3** — **Scanner check:** each ISBN matches **`barcode`** in Firestore (Notepad / scanner test).
-- [x] Section **4** — **Pi runtime chosen:** Python 3 (+ `firebase-admin`, `pyserial`).
+- [x] Section **4** — **Pi runtime chosen:** Python 3 (+ `firebase-admin`, `pyserial`); **version `3.13.5`** on device.
 
 **Still to do**
 
 - [ ] **§1 row 1:** Replace `*fill when wired*` with your **actual GPIO / ADC label** for seat 1 in this file *(skip only if seat 1 uses the same doc as above but you intentionally keep the placeholder)*.
-- [ ] Section **4** — Fill **Python version** on the Pi line (e.g. `3.11.x`) once Raspberry Pi OS is installed.
 - [ ] **Pi:** Copy `hardware/pi-config.template.json` → **`pi-config.local.json`** on the Raspberry Pi, align with this doc, configure Firebase **service account** path; **never commit** secrets (see `.gitignore`).
 
 **Next**
