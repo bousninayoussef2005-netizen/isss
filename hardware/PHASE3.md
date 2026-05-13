@@ -11,8 +11,8 @@
 | Layer | Responsibility |
 |--------|----------------|
 | **ESP32** | Sensors → JSON lines (`ping`, `rfid`, `fsr`). |
-| **`serial_bridge.py`** | Serial → Firestore **events** (`kiosk_auth_events`, `seats` telemetry). Tags new RFID rows with **`pi_worker_state: "pending"`** for the worker. |
-| **`kiosk_worker.py`** (this phase) | Poll Firestore for **`pending`** rows → apply rules → update **`transactions`** / **`books`** (same shapes as **`Firebase.js`**) → mark event **`done`** or **`error`**. |
+| **`serial_bridge.py`** | Serial → Firestore **`kiosk_auth_events`** (`rfid_scan`, **`barcode_scan`**, …) and **`seats`**. RFID / barcode rows use **`pi_worker_state: "pending"`**. |
+| **`kiosk_worker.py`** | Poll **`pending`** → **borrow/return** (same rules as **`Firebase.js`**) → **`transactions`** + **`books`** → mark **`done`** / **`error`**. |
 | **Website** | Staff / student UI unchanged at first; later you can hide duplicate flows if the kiosk is fully automated. |
 
 **Why Pi + Firestore (not Cloud Functions only):** your lab already has the key, venv, and USB devices on the Pi. You can add a **USB barcode scanner** (serial or HID) next to the Pi without extra cloud runtime. You can still add **Cloud Functions** later for redundancy.
@@ -49,7 +49,9 @@ You should see **`pending`** RFID events (if any). Then live **once**:
   --once
 ```
 
-Each pending doc should get **`pi_worker_state: "done"`** and a stub **`pi_worker_note`**. Scan a tag again to create a **new** pending row and re-run **`--once`** to verify the pipeline.
+Each pending doc is handled: **`rfid_scan`** arms the worker in memory; **`barcode_scan`** completes **borrow** or **return** if a card was scanned within **`timeouts_seconds.barcode_then_rfid`**. Errors set **`pi_worker_state: "error"`** with **`pi_worker_error`**.
+
+**Happy path test:** send one line `{"t":"rfid","uid":"..."}` then within 10s a line `{"t":"barcode","code":"978..."}` (same serial as the bridge). Run **`kiosk_worker.py --once`** (or leave the loop running). Check **`transactions`** and **`books`** in the console.
 
 ---
 
@@ -60,18 +62,26 @@ Each pending doc should get **`pi_worker_state: "done"`** and a stub **`pi_worke
   --config ~/smartlib/pi-config.local.json
 ```
 
-Default poll interval: **2 s**. Add a second **systemd** unit (copy **`smartlib-serial-bridge.service.example`**) with **`ExecStart=... kiosk_worker.py`** if you want it on boot.
-
-**Do not** run two copies of the worker against the same queue unless you add **transactions / leases** (future hardening).
+Default poll interval: **2 s**. Add a second **systemd** unit (copy **`smartlib-serial-bridge.service.example`**) with **`ExecStart=... kiosk_worker.py`** if you want it on boot. **Do not** run two worker copies against the same queue.
 
 ---
 
-## Step 4 — Implement real borrows (your code)
+## Step 4 — Optional config (`pi-config.local.json`)
 
-1. **Mirror `Firebase.js`** helpers: `studentBorrowBook` / `studentReturnBook` field names (`student_uid`, `book_id`, `book_title`, `type`, `timestamp`, `dueDate`).
-2. **Barcode:** add a path for the book id (USB scanner serial line, `stdin`, or extra JSON type on a second UART). Match **`books.barcode`** like Phase 0.
-3. **State machine:** e.g. after **`rfid_scan`**, wait N seconds for a **`barcode_scan`** event (store **`kiosk_session`** doc or in-memory on Pi — document your choice).
-4. **Errors:** set **`pi_worker_state": "error"`**, **`pi_worker_error`**: human-readable string, and do **not** leave the row **`pending`** forever.
+```json
+"kiosk": { "max_active_borrows": 3, "borrow_due_days": 14 },
+"timeouts_seconds": { "barcode_then_rfid": 10 }
+```
+
+Defaults match **`Firebase.js`** (`MAX_ACTIVE_BORROWS = 3`, 14-day due). **`python-dateutil`** is recommended for ordering legacy **`timestamp`** strings on old **`transactions`** rows (`pip install python-dateutil`).
+
+---
+
+## Step 5 — Later hardening
+
+- Persist **arm** state in Firestore if the worker must survive restarts mid-session.
+- **Firestore security rules** for kiosk collections.
+- **Leases / idempotency** if two worker processes could run by mistake.
 
 ---
 
@@ -79,6 +89,6 @@ Default poll interval: **2 s**. Add a second **systemd** unit (copy **`smartlib-
 
 | Path | Role |
 |------|------|
-| `hardware/pi/kiosk_worker.py` | Pi: poll **`kiosk_auth_events`** → stub **`done`**; extend for **`transactions`**. |
-| `hardware/pi/serial_bridge.py` | Sets **`pi_worker_state": "pending"`** on new RFID events. |
+| `hardware/pi/kiosk_worker.py` | Pi: **`kiosk_auth_events`** queue → **borrow/return** → **`transactions`** + **`books`**. |
+| `hardware/pi/serial_bridge.py` | **`rfid`** / **`barcode`** / **`fsr`** → Firestore. |
 | `hardware/PHASE3.md` | This guide |

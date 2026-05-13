@@ -10,6 +10,7 @@ Phase 3: each RFID row includes pi_worker_state \"pending\" so hardware/pi/kiosk
 Message shapes:
   {"t":"ping"}  — no Firestore write
   {"t":"rfid","uid":"93BA9456"}  — kiosk_auth_events (action, student_id, uid, timestamp, pi_worker_state)
+  {"t":"barcode","code":"9782070793143"}  — optional "intent":"borrow"|"return" (default borrow) → kiosk_auth_events
   {"t":"fsr","seat":2,"raw":1850}  — updates seats/{id} fsrRaw + updatedAt only
 """
 from __future__ import annotations
@@ -76,6 +77,30 @@ def handle_line(msg: dict, *, db, cfg: dict, dry_run: bool) -> None:
             return
         db.collection("kiosk_auth_events").add(payload)
         print(f"[bridge] rfid -> {sid}", flush=True)
+        return
+
+    if t == "barcode":
+        code = msg.get("code") if msg.get("code") is not None else msg.get("barcode")
+        if not code:
+            print(f"[bridge] barcode missing code: {msg!r}", file=sys.stderr, flush=True)
+            return
+        code = str(code).strip()
+        intent = (msg.get("intent") or "borrow").strip().lower()
+        if intent not in ("borrow", "return"):
+            intent = "borrow"
+        payload = {
+            "action": "barcode_scan",
+            "barcode": code,
+            "intent": intent,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "pi_worker_state": "pending",
+            "ingest_source": "pi_serial_bridge",
+        }
+        if dry_run:
+            print(f"[dry-run] kiosk_auth_events add {payload}", flush=True)
+            return
+        db.collection("kiosk_auth_events").add(payload)
+        print(f"[bridge] barcode -> {code!r} intent={intent}", flush=True)
         return
 
     if t == "fsr":

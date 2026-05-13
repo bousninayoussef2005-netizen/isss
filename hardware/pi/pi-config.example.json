@@ -26,6 +26,10 @@
   "timeouts_seconds": {
     "barcode_then_rfid": 10
   },
+  "kiosk": {
+    "max_active_borrows": 3,
+    "borrow_due_days": 14
+  },
   "firebase_credentials_path": "__SMARTLIB_HOME__/secrets/firestore-key.json",
   "notes": "Generated on Pi by setup_pi.sh. Never commit this file if copied into a git repo."
 }

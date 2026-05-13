@@ -26,6 +26,10 @@
   "timeouts_seconds": {
     "barcode_then_rfid": 10
   },
+  "kiosk": {
+    "max_active_borrows": 3,
+    "borrow_due_days": 14
+  },
   "firebase_credentials_path": null,
   "notes": "Set firebase_credentials_path only in pi-config.local.json on the Pi (absolute path to service account JSON). Template keeps null. Verified: seats, RFID, books. Seat 1 GPIO in local if needed. Never commit secrets."
 }

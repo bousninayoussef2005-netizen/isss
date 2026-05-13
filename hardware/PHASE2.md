@@ -21,6 +21,7 @@ Minimum fields:
 |-----------|---------|-------------------------|
 | `ping` | heartbeat / keepalive | optional `src` |
 | `rfid` | RFID tag read | **`uid`** (hex string, same style as Phase 0 table) |
+| `barcode` | book barcode (USB scanner → Pi serial, or ESP32) | **`code`** (string, must match `books.barcode`); optional **`intent`**: `"borrow"` (default) or `"return"` |
 | `fsr` | force reading for one seat | **`seat`** (1-based index, matches `seat_index_to_seat_id`), **`raw`** (integer ADC) |
 
 **Examples (copy these for tests):**
@@ -34,6 +35,14 @@ Minimum fields:
 ```
 
 ```json
+{"t":"barcode","code":"9782070793143"}
+```
+
+```json
+{"t":"barcode","code":"9782070793143","intent":"return"}
+```
+
+```json
 {"t":"fsr","seat":2,"raw":1850}
 ```
 
@@ -41,6 +50,7 @@ Minimum fields:
 
 - Use **double quotes** in JSON.
 - **`uid`** must match a key in `pi-config.local.json` → `rfid_uid_to_student_id` (uppercase hex as in Phase 0).
+- **`code`** must match a **`books`** document field **`barcode`** (Phase 0). **`kiosk_worker.py`** pairs barcode with the **most recent RFID arm** within **`timeouts_seconds.barcode_then_rfid`** (see **PHASE3.md**).
 - **`seat`** must match a key in `seat_index_to_seat_id` (string `"1"` or `"2"` in config; JSON may send number `2` — the bridge normalizes).
 
 ---
@@ -192,6 +202,6 @@ sudo systemctl disable --now smartlib-serial-bridge.service
 
 | Path | Role |
 |------|------|
-| `hardware/pi/serial_bridge.py` | Pi: serial → parse JSON → Firestore |
+| `hardware/pi/serial_bridge.py` | Pi: serial → JSON → Firestore (`rfid`, `barcode`, `fsr`, …) |
 | `hardware/pi/smartlib-serial-bridge.service.example` | **systemd** unit — install on Pi (see Step 7a) |
 | `hardware/PHASE2.md` | This guide |
