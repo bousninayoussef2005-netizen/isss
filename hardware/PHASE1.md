@@ -42,7 +42,7 @@ Use **Arduino IDE** or **PlatformIO** on your PC. Open the sketch in this repo:
 
 **`hardware/esp32/Phase1SerialPing/Phase1SerialPing.ino`**
 
-It prints one JSON line per second on **USB Serial** (`Serial` @ 115200):
+It prints **at least** a **`ping`** JSON line every second on **USB Serial** (`Serial` @ 115200). The sketch in that folder may also emit **`rfid`** / **`fsr`** lines for Phase 2; for Phase 1 you only need to see **`ping`** once per second:
 
 `{"t":"ping","src":"esp32"}`
 
@@ -98,6 +98,6 @@ Stop with **Ctrl+C**.
 
 | Path | Role |
 |------|------|
-| `hardware/esp32/Phase1SerialPing/Phase1SerialPing.ino` | Minimal ESP32 firmware |
+| `hardware/esp32/Phase1SerialPing/Phase1SerialPing.ino` | ESP32 firmware (ping + optional RFID/FSR for Phase 2) |
 | `hardware/pi/serial_listen.py` | Pi: read serial, print lines |
 | `hardware/pi/smoke_test.py` | Pi: Firestore check (Phase 0) |

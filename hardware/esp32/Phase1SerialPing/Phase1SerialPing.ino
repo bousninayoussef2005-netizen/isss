@@ -32,7 +32,7 @@ static const size_t RFID_UID_BYTES_MAX = 10;
 static const size_t RFID_UID_HEX_MAX = RFID_UID_BYTES_MAX * 2u + 1u;
 
 // ----------------------------- config ---------------------------------
-static const uint32_t PING_INTERVAL_MS = 2000;
+static const uint32_t PING_INTERVAL_MS = 1000;
 static const uint32_t RFID_DEBOUNCE_MS = 2000;  // same tag re-fire delay
 static const uint32_t FSR_MIN_INTERVAL_MS = 400;
 static const int FSR_DELTA_THRESHOLD = 80;  // also send when ADC jumps this much
