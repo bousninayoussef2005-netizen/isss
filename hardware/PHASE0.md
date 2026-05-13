@@ -1,6 +1,6 @@
 # Phase 0 — Freeze the spec
 
-**Draft status:** RFID table **filled** from your scans (see §2). Seats and book barcodes may still need **VERIFY** in Firestore / with the scanner.
+**Draft status:** RFID (§2) and test ISBNs (§3) are filled; seat **2** GPIO recorded. Use **§5 checklist** for what is done vs still open (Firestore VERIFY, seat **1** wire, Pi version, `pi-config.local.json`).
 
 ---
 
@@ -68,10 +68,23 @@ Check **one** box:
 
 ## 5) Copy-paste checklist (done = Phase 0 complete)
 
-- [ ] Table **1**: every **wired FSR** has a row; Firestore doc ids **verified** in console.
-- [x] Table **2**: RFID UIDs scanned and mapped to **`students`** ids (Youssef id **verify** in console if needed).
-- [ ] Table **3**: barcodes **typed once with scanner** into Notepad and match Firestore.
-- [ ] Section **4**: Pi language + version recorded.
-- [ ] Copy filled seat + RFID map into **`pi-config.local.json`** on the Pi (never commit; see `.gitignore`).
+**Completed so far**
 
-When the checklist is done, Phase 0 is complete → **Phase 1** (ESP32 ↔ Pi serial).
+- [x] Table **2** — **RFID:** three tags mapped (`93BA9456`, `31FC9616`, `999EB402` → student ids + names in §2). Same mapping exists in `hardware/pi-config.template.json`.
+- [x] Table **1** — **Seat 2:** ESP32 **`GPIO35`** recorded; Firestore target **`seat_2`** (still **VERIFY** doc id / field `id` in console).
+- [x] Table **3** — **Barcodes:** three ISBN strings recorded with titles (§3); `BK-007` / `BK-008` called out as the ids to paste after **Add Book**.
+- [x] Section **4** — **Pi runtime chosen:** Python 3 (+ `firebase-admin`, `pyserial`).
+
+**Still to do**
+
+- [ ] Table **1** — **Seat 1:** fill ESP32 **pin / ADC** (wire label); **VERIFY** Firestore **`seat_1`** doc id and field **`id`**.
+- [ ] Table **1** — **Seat 2:** **VERIFY** `seat_2` in Firestore matches this doc (if your project uses different ids, update §1 + `pi-config.template.json`).
+- [ ] Table **2** — Confirm **Youssef** tag → **`241-7504`** matches the real **`students`** document id (or update §2 + `pi-config.template.json`).
+- [ ] Table **3** — **VERIFY** **`BK-006`** for Great Expectations in your Firestore (or replace with actual `id`).
+- [ ] Table **3** — After books exist in Firestore: set **`BK-007`** / **`BK-008`** (or whatever ids the app assigned) in §3 first column; remove “paste” wording.
+- [ ] Table **3** — **Scanner check:** scan each ISBN into Notepad (or similar) and confirm the string **exactly** matches the `barcode` field in Firestore.
+- [ ] Section **4** — Fill **Python version** on the Pi line (e.g. `3.11.x`) when the device is set up.
+- [ ] **Pi:** Copy `hardware/pi-config.template.json` → **`pi-config.local.json`** on the Raspberry Pi, align with this doc, and **never commit** secrets (see `.gitignore`).
+
+When every box is checked, Phase 0 is complete → **Phase 1** (ESP32 ↔ Pi serial).
+
