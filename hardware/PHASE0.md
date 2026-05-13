@@ -46,8 +46,8 @@ Use Firestore **`books`** rows: field **`barcode`** must match what the **USB sc
 | Book `id` | `barcode` (exact string from scanner) | Title / author (for you) |
 |-----------|----------------------------------------|---------------------------|
 | `BK-006` *(VERIFY — or replace with actual `id` in your project)* | `9782070793143` | Great Expectations |
-| *Paste `id` from Firestore after adding the book* | `9781853260049` | L'ENFANT — Jules Vales |
-| *Paste `id` from Firestore after adding the book* | `9780140390827` | The American — Henry James |
+| *Paste `BK-007` from Firestore after adding the book* | `9781853260049` | L'ENFANT — Jules Vales |
+| *Paste `BK-008` from Firestore after adding the book* | `9780140390827` | The American — Henry James |
 
 **Removed from active tests:** older sample `BK-002` / `52145645` — keep that doc in Firestore if you still use it; add a row here again if needed.
 
