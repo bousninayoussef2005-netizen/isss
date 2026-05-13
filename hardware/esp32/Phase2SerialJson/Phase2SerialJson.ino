@@ -1,12 +1,13 @@
 /**
- * Phase 2 — SmartLib edge: JSON lines on USB Serial @ 115200 for Pi `serial_bridge.py`.
+ * SmartLib ESP32 → Pi (USB Serial 115200): ping + RFID + FSR as one JSON line each.
+ * Same program as ../Phase1SerialPing/Phase1SerialPing.ino — keep both in sync if you edit.
  *
  * Libraries (Arduino Library Manager):
  *   - MFRC522 by GithubCommunity
  *
- * Protocol: one JSON object per line (Serial.println). Fields match hardware/PHASE2.md.
+ * Protocol: one JSON object per line (Serial.println). Matches hardware/PHASE2.md + Pi serial_bridge.py.
  *
- * --- Default wiring (edit #defines if your bench differs) ---
+ * --- Wiring (edit #defines below if yours differs) ---
  *
  * RC522 RFID (SPI — ESP32 VSPI):
  *   RC522  SDA/SS  -> GPIO 5
@@ -14,13 +15,13 @@
  *   RC522  SCK     -> GPIO 18
  *   RC522  MOSI    -> GPIO 23
  *   RC522  MISO    -> GPIO 19
- *   RC522  3.3V / GND to ESP32 (use 3.3V, not 5V)
+ *   RC522  3.3V / GND to ESP32 (3.3V only)
  *
- * FSR voltage dividers (signal to ADC, other leg to GND, resistor to 3V3 — match your build):
- *   Seat 1 -> GPIO 34 (ADC1, input-only)  -> Pi maps "1" -> seat_1
- *   Seat 2 -> GPIO 35 (ADC1)              -> matches pi-config seat_index_to_esp_gpio "2":35
+ * FSR (voltage divider to ADC):
+ *   Seat 1 -> GPIO 34   (Pi seat_index 1 → seat_1)
+ *   Seat 2 -> GPIO 35   (Pi seat_index 2 → seat_2, matches pi-config seat_index_to_esp_gpio)
  *
- * Serial: USB cable to Pi (same as Phase1SerialPing). Config: serial.baud 115200, port e.g. /dev/ttyUSB0.
+ * UART to Pi instead of USB: use Serial2.begin(115200, SERIAL_8N1, RX, TX); replace Serial with Serial2 for output.
  */
 #include <Arduino.h>
 #include <cstdio>
@@ -122,7 +123,7 @@ void setup() {
   SPI.begin(18, 19, 23, RFID_SS_PIN);
   mfrc522.PCD_Init();
   delay(4);
-  // Do not call PCD_DumpVersionToSerial() here — it prints non-JSON and breaks the Pi bridge.
+  // Do not call PCD_DumpVersionToSerial() — non-JSON breaks the Pi bridge.
   lastRfidUid[0] = '\0';
 #endif
 
