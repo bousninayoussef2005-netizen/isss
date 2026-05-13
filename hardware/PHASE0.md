@@ -1,6 +1,6 @@
 # Phase 0 — Freeze the spec
 
-**Draft status:** RFID (§2) and test ISBNs (§3) are filled; seat **2** GPIO recorded. Use **§5 checklist** for what is done vs still open (Firestore VERIFY, seat **1** wire, Pi version, `pi-config.local.json`).
+**Draft status:** Firestore **verification** for seats, RFID, and test books is complete (see §5). Remaining: optional **§1 seat 1 GPIO** line in this file, **Python version** when the Pi exists, and **`pi-config.local.json`** on the Pi — then move to **Phase 1** (serial).
 
 ---
 
@@ -13,7 +13,7 @@ For **each** FSR / seat channel on the ESP32, record how it maps to a document i
 | # | Physical label (tape on chair / cable) | ESP32 channel / wire label | Firestore **document ID** | Field **`id`** (if different from doc ID) |
 |---|----------------------------------------|-----------------------------|-----------------------------|-------------------------------------------|
 | 1 | Chair / FSR #1 | *fill when wired* e.g. `ADC1` / `GPIO34` | `seat_1` | `seat_1` (VERIFY) |
-| 2 | Chair / FSR #2 | `GPIO35` (ADC1) | `seat_2` | `seat_2` (VERIFY) |
+| 2 | Chair / FSR #2 | `GPIO35` (ADC1) | `seat_2` | `seat_2` |
 | 3 | *(add a row per extra FSR)* | | | |
 
 **Notes:**
@@ -29,7 +29,7 @@ For **each** FSR / seat channel on the ESP32, record how it maps to a document i
 
 | RFID UID (hex) | Firestore `students` document id (= `id` field) | Student name (for you) |
 |----------------|--------------------------------------------------|--------------------------|
-| `93BA9456` | `241-7504` | Youssef Bousnina — **confirm** `students` doc id matches this tag in your console |
+| `93BA9456` | `241-7504` | Youssef Bousnina |
 | `31FC9616` | `656-5454` | Zayneb Sassi |
 | `999EB402` | `564-6616` | Ons Hajali |
 
@@ -45,9 +45,9 @@ Use Firestore **`books`** rows: field **`barcode`** must match what the **USB sc
 
 | Book `id` | `barcode` (exact string from scanner) | Title / author (for you) |
 |-----------|----------------------------------------|---------------------------|
-| `BK-006` *(VERIFY — or replace with actual `id` in your project)* | `9782070793143` | Great Expectations |
-| *Paste `BK-007` from Firestore after adding the book* | `9781853260049` | L'ENFANT — Jules Vales |
-| *Paste `BK-008` from Firestore after adding the book* | `9780140390827` | The American — Henry James |
+| `BK-006` | `9782070793143` | Great Expectations |
+| `BK-007` | `9781853260049` | L'ENFANT — Jules Vales |
+| `BK-008` | `9780140390827` | The American — Henry James |
 
 **Removed from active tests:** older sample `BK-002` / `52145645` — keep that doc in Firestore if you still use it; add a row here again if needed.
 
@@ -68,23 +68,25 @@ Check **one** box:
 
 ## 5) Copy-paste checklist (done = Phase 0 complete)
 
-**Completed so far**
+**Completed**
 
-- [x] Table **2** — **RFID:** three tags mapped (`93BA9456`, `31FC9616`, `999EB402` → student ids + names in §2). Same mapping exists in `hardware/pi-config.template.json`.
-- [x] Table **1** — **Seat 2:** ESP32 **`GPIO35`** recorded; Firestore target **`seat_2`** (still **VERIFY** doc id / field `id` in console).
-- [x] Table **3** — **Barcodes:** three ISBN strings recorded with titles (§3); `BK-007` / `BK-008` called out as the ids to paste after **Add Book**.
+- [x] Table **1** — **Seat 1:** ESP32 **pin / ADC** (wire) and Firestore **`seat_1`** document id + field **`id`** verified in your project.
+- [x] Table **1** — **Seat 2:** **`GPIO35`**, Firestore **`seat_2`** document id + field **`id`** verified; matches `hardware/pi-config.template.json`.
+- [x] Table **2** — **RFID:** three tags mapped (`93BA9456`, `31FC9616`, `999EB402` → student ids + names in §2); same mapping in `hardware/pi-config.template.json`.
+- [x] Table **2** — **Youssef:** tag `93BA9456` ↔ **`241-7504`** confirmed against Firestore **`students`**.
+- [x] Table **3** — **`BK-006`**, **`BK-007`**, **`BK-008`** verified in Firestore; §3 table updated with final ids and ISBNs.
+- [x] Table **3** — **Scanner check:** each ISBN matches **`barcode`** in Firestore (Notepad / scanner test).
 - [x] Section **4** — **Pi runtime chosen:** Python 3 (+ `firebase-admin`, `pyserial`).
 
 **Still to do**
 
-- [ ] Table **1** — **Seat 1:** fill ESP32 **pin / ADC** (wire label); **VERIFY** Firestore **`seat_1`** doc id and field **`id`**.
-- [ ] Table **1** — **Seat 2:** **VERIFY** `seat_2` in Firestore matches this doc (if your project uses different ids, update §1 + `pi-config.template.json`).
-- [ ] Table **2** — Confirm **Youssef** tag → **`241-7504`** matches the real **`students`** document id (or update §2 + `pi-config.template.json`).
-- [ ] Table **3** — **VERIFY** **`BK-006`** for Great Expectations in your Firestore (or replace with actual `id`).
-- [ ] Table **3** — After books exist in Firestore: set **`BK-007`** / **`BK-008`** (or whatever ids the app assigned) in §3 first column; remove “paste” wording.
-- [ ] Table **3** — **Scanner check:** scan each ISBN into Notepad (or similar) and confirm the string **exactly** matches the `barcode` field in Firestore.
-- [ ] Section **4** — Fill **Python version** on the Pi line (e.g. `3.11.x`) when the device is set up.
-- [ ] **Pi:** Copy `hardware/pi-config.template.json` → **`pi-config.local.json`** on the Raspberry Pi, align with this doc, and **never commit** secrets (see `.gitignore`).
+- [ ] **§1 row 1:** Replace `*fill when wired*` with your **actual GPIO / ADC label** for seat 1 in this file *(skip only if seat 1 uses the same doc as above but you intentionally keep the placeholder)*.
+- [ ] Section **4** — Fill **Python version** on the Pi line (e.g. `3.11.x`) once Raspberry Pi OS is installed.
+- [ ] **Pi:** Copy `hardware/pi-config.template.json` → **`pi-config.local.json`** on the Raspberry Pi, align with this doc, configure Firebase **service account** path; **never commit** secrets (see `.gitignore`).
 
-When every box is checked, Phase 0 is complete → **Phase 1** (ESP32 ↔ Pi serial).
+**Next**
+
+- **Phase 1:** ESP32 ↔ Raspberry Pi **serial** (hello line / JSON events).
+
+When the **Still to do** boxes are checked, close Phase 0 in the repo and start **Phase 1**.
 
