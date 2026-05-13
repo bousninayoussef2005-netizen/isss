@@ -4,9 +4,12 @@ Read JSON lines from ESP32 (serial) and write to Firestore (Admin SDK).
 
 See hardware/PHASE2.md. Use --dry-run first.
 
+Phase 3: each RFID row includes pi_worker_state \"pending\" so hardware/pi/kiosk_worker.py
+(or your own worker) can poll kiosk_auth_events and apply borrow/return rules.
+
 Message shapes:
   {"t":"ping"}  — no Firestore write
-  {"t":"rfid","uid":"93BA9456"}  — kiosk_auth_events + mapped student_id
+  {"t":"rfid","uid":"93BA9456"}  — kiosk_auth_events (action, student_id, uid, timestamp, pi_worker_state)
   {"t":"fsr","seat":2,"raw":1850}  — updates seats/{id} fsrRaw + updatedAt only
 """
 from __future__ import annotations
@@ -66,6 +69,7 @@ def handle_line(msg: dict, *, db, cfg: dict, dry_run: bool) -> None:
             "uid": str(uid).strip().upper(),
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "pi_worker_state": "pending",
+            "ingest_source": "pi_serial_bridge",
         }
         if dry_run:
             print(f"[dry-run] kiosk_auth_events add {payload}", flush=True)
@@ -97,7 +101,19 @@ def handle_line(msg: dict, *, db, cfg: dict, dry_run: bool) -> None:
             print(f"[dry-run] seats/{doc_id} update {updates}", flush=True)
             return
         ref = db.collection("seats").document(doc_id)
-        ref.update(updates)
+        try:
+            ref.update(updates)
+        except Exception as e:
+            err = str(e).lower()
+            if "not found" in err or "no document" in err or "404" in err:
+                print(
+                    f"[bridge] fsr: no Firestore document seats/{doc_id} — create it or fix seat_index_to_seat_id",
+                    file=sys.stderr,
+                    flush=True,
+                )
+            else:
+                print(f"[bridge] fsr: seats/{doc_id} update failed: {e}", file=sys.stderr, flush=True)
+            return
         print(f"[bridge] fsr seat={doc_id} raw={raw_int}", flush=True)
         return
 
