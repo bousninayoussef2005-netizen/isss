@@ -99,14 +99,25 @@ Each pending doc is handled: **`rfid_scan`** arms the worker in memory; **`barco
 
 ---
 
-## Step 3 — Run continuously (optional)
+## Step 3 — Run on boot (**systemd**)
+
+Copy unit files from **`hardware/pi/`** (adjust **`User=`** and **`/home/pi`** if needed), then:
 
 ```bash
-~/smartlib/venv/bin/python ~/smartlib/bin/kiosk_worker.py \
-  --config ~/smartlib/pi-config.local.json
+cd /path/to/isss/hardware/pi
+sudo cp smartlib-serial-bridge.service.example /etc/systemd/system/smartlib-serial-bridge.service
+sudo cp smartlib-kiosk-worker.service.example /etc/systemd/system/smartlib-kiosk-worker.service
+sudo cp smartlib-barcode-serial.service.example /etc/systemd/system/smartlib-barcode-serial.service
+sudo cp smartlib-edge.target.example /etc/systemd/system/smartlib-edge.target
+sudo systemctl daemon-reload
+sudo systemctl enable --now smartlib-edge.target
 ```
 
-Default poll interval: **2 s**. Add a second **systemd** unit (copy **`smartlib-serial-bridge.service.example`**) with **`ExecStart=... kiosk_worker.py`** if you want it on boot. **Do not** run two worker copies against the same queue.
+Or enable the three **`.service`** units individually (see comments inside each file). **Stop** any manual **`python ...`** copies first so serial ports are free.
+
+**Logs:** see **`hardware/pi/MONITORING.md`**.
+
+**Do not** run two **`kiosk_worker`** instances.
 
 ---
 
@@ -121,11 +132,12 @@ Defaults match **`Firebase.js`** (`MAX_ACTIVE_BORROWS = 3`, 14-day due). **`pyth
 
 ---
 
-## Step 5 — Later hardening
+## Step 5 — Firestore + monitoring
 
-- Persist **arm** state in Firestore if the worker must survive restarts mid-session.
-- **Firestore security rules** for kiosk collections.
-- **Leases / idempotency** if two worker processes could run by mistake.
+- **Rules vs Pi:** the Pi uses the **Admin SDK** — read **`hardware/pi/FIRESTORE-LAB.md`**. Optional client rule snippet: **`hardware/firestore.rules.kiosk-snippet.txt`**.
+- **Logs / health:** **`hardware/pi/MONITORING.md`**.
+- Persist **arm** state in Firestore if the worker must survive restarts mid-session (future).
+- **Leases / idempotency** if two worker processes could run by mistake (future).
 
 ---
 
@@ -136,4 +148,10 @@ Defaults match **`Firebase.js`** (`MAX_ACTIVE_BORROWS = 3`, 14-day due). **`pyth
 | `hardware/pi/kiosk_worker.py` | Pi: **`kiosk_auth_events`** queue → **borrow/return** → **`transactions`** + **`books`**. |
 | `hardware/pi/serial_bridge.py` | **`rfid`** / **`barcode`** / **`fsr`** → Firestore (ESP32 serial). |
 | `hardware/pi/barcode_hid_to_kiosk.py` | Pi: **USB HID** or **USB-serial** scanner → **`kiosk_auth_events`** (`barcode_scan`). |
+| `hardware/pi/smartlib-kiosk-worker.service.example` | **systemd** — **`kiosk_worker.py`**. |
+| `hardware/pi/smartlib-barcode-serial.service.example` | **systemd** — **`barcode_hid_to_kiosk.py --mode serial`**. |
+| `hardware/pi/smartlib-edge.target.example` | **systemd** — start bridge + worker + barcode together. |
+| `hardware/pi/MONITORING.md` | **`journalctl`** / health checks. |
+| `hardware/pi/FIRESTORE-LAB.md` | IAM + Firestore rules notes for the lab. |
+| `hardware/firestore.rules.kiosk-snippet.txt` | Optional **client** deny for **`kiosk_auth_events`**. |
 | `hardware/PHASE3.md` | This guide |

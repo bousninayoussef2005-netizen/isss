@@ -1,0 +1,29 @@
+# SmartLib — USB-serial barcode scanner → Firestore kiosk_auth_events
+#
+# Requires barcode_serial in pi-config.local.json and dialout for the scanner device.
+#
+# Install:
+#   sudo cp smartlib-barcode-serial.service.example /etc/systemd/system/smartlib-barcode-serial.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now smartlib-barcode-serial.service
+#
+# Logs:  journalctl -u smartlib-barcode-serial -f
+
+[Unit]
+Description=SmartLib USB-serial barcode to Firestore
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+SupplementaryGroups=dialout
+WorkingDirectory=/home/pi/smartlib
+Environment=HOME=/home/pi
+ExecStart=/home/pi/smartlib/venv/bin/python /home/pi/smartlib/bin/barcode_hid_to_kiosk.py --config /home/pi/smartlib/pi-config.local.json --mode serial
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

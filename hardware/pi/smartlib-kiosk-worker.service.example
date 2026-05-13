@@ -1,0 +1,27 @@
+# SmartLib — run kiosk_worker.py as a system service on the Raspberry Pi.
+#
+# Install:
+#   sudo cp smartlib-kiosk-worker.service.example /etc/systemd/system/smartlib-kiosk-worker.service
+#   sudo nano /etc/systemd/system/smartlib-kiosk-worker.service   # User= / paths if not "pi"
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now smartlib-kiosk-worker.service
+#
+# Logs:  journalctl -u smartlib-kiosk-worker -f
+
+[Unit]
+Description=SmartLib kiosk worker (Firestore borrow/return queue)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/smartlib
+Environment=HOME=/home/pi
+ExecStart=/home/pi/smartlib/venv/bin/python /home/pi/smartlib/bin/kiosk_worker.py --config /home/pi/smartlib/pi-config.local.json
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

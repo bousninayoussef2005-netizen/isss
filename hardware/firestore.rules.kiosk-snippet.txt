@@ -1,0 +1,6 @@
+// Paste inside: service cloud.firestore { match /databases/{database}/documents { ... } }
+// Denies browser/mobile SDK access to kiosk queue; Pi Admin SDK is not affected by rules.
+
+match /kiosk_auth_events/{id} {
+  allow read, write: if false;
+}

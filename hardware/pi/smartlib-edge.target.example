@@ -1,0 +1,23 @@
+# Optional: start/stop all SmartLib edge Python services together.
+#
+# Install:
+#   sudo cp smartlib-edge.target.example /etc/systemd/system/smartlib-edge.target
+#   sudo systemctl daemon-reload
+#
+# Option A — enable each service (simplest):
+#   sudo systemctl enable --now smartlib-serial-bridge smartlib-kiosk-worker smartlib-barcode-serial
+#
+# Option B — bundle with this target (starts all three when the target starts):
+#   sudo cp smartlib-edge.target.example /etc/systemd/system/smartlib-edge.target
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable smartlib-edge.target
+#   sudo systemctl start smartlib-edge.target
+
+[Unit]
+Description=SmartLib Pi edge (serial bridge + kiosk worker + barcode serial)
+After=network-online.target
+Wants=network-online.target
+Requires=smartlib-serial-bridge.service smartlib-kiosk-worker.service smartlib-barcode-serial.service
+
+[Install]
+WantedBy=multi-user.target
