@@ -65,6 +65,7 @@ def handle_line(msg: dict, *, db, cfg: dict, dry_run: bool) -> None:
             "student_id": sid,
             "uid": str(uid).strip().upper(),
             "timestamp": datetime.now(timezone.utc).isoformat(),
+            "pi_worker_state": "pending",
         }
         if dry_run:
             print(f"[dry-run] kiosk_auth_events add {payload}", flush=True)

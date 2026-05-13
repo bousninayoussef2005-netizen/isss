@@ -184,7 +184,7 @@ sudo systemctl disable --now smartlib-serial-bridge.service
 
 - Add **logging** to a file under `~/smartlib/log/`.
 - Add **rate limits** and **invalid JSON** counters.
-- Map **`rfid`** → real **seat / borrow** business rules (Phase 3+).
+- Map **`rfid`** → real **seat / borrow** business rules — see **[PHASE3.md](../PHASE3.md)** (`kiosk_worker.py` on the Pi + Firestore).
 
 ---
 
