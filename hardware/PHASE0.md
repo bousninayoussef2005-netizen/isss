@@ -1,6 +1,6 @@
 # Phase 0 — Freeze the spec
 
-**Draft status:** Tables below are **partially filled** from your SmartLib Firestore screenshots and this repo. Anything marked **VERIFY** or **PENDING_SCAN** must be corrected in **Firebase Console** or by **scanning tags** before you trust it in production.
+**Draft status:** RFID table **filled** from your scans (see §2). Seats and book barcodes may still need **VERIFY** in Firestore / with the scanner.
 
 ---
 
@@ -27,18 +27,15 @@ For **each** FSR / seat channel on the ESP32, record how it maps to a document i
 
 **Convention:** UID = **uppercase hex**, no spaces (match your RFID library output).
 
-**PENDING_SCAN:** Run a small RFID read sketch once per tag; paste the UID here.
-
 | RFID UID (hex) | Firestore `students` document id (= `id` field) | Student name (for you) |
 |----------------|--------------------------------------------------|--------------------------|
-| `PENDING_SCAN_TAG_1` | `241-7504` | Youssef Bousnina (VERIFY id in `students`) |
-| `PENDING_SCAN_TAG_2` | *e.g. second test student id* | *name* |
-| `PENDING_SCAN_TAG_3` | | |
+| `93BA9456` | `241-7504` | Youssef Bousnina — **confirm** `students` doc id matches this tag in your console |
+| `31FC9616` | `656-5454` | Zayneb Sassi |
+| `999EB402` | `564-6616` | Ons Hajali |
 
 **Notes:**
 
-- `241-7504` appeared in your **`seats`** / **`transactions`** sample data — **open `students`** and confirm that document exists and matches the person holding tag 1.
-- Replace `PENDING_SCAN_TAG_*` with real hex (example shape: `E3D4A1B2C90F`).
+- If Youssef’s document id in **`students`** is not `241-7504`, change only that cell (and `pi-config.template.json`) to match Firestore.
 
 ---
 
@@ -70,7 +67,7 @@ Check **one** box:
 ## 5) Copy-paste checklist (done = Phase 0 complete)
 
 - [ ] Table **1**: every **wired FSR** has a row; Firestore doc ids **verified** in console.
-- [ ] Table **2**: every demo **RFID UID** is **real hex** (no `PENDING_SCAN_*`), student ids exist in **`students`**.
+- [x] Table **2**: RFID UIDs scanned and mapped to **`students`** ids (Youssef id **verify** in console if needed).
 - [ ] Table **3**: barcodes **typed once with scanner** into Notepad and match Firestore.
 - [ ] Section **4**: Pi language + version recorded.
 - [ ] Copy filled seat + RFID map into **`pi-config.local.json`** on the Pi (never commit; see `.gitignore`).

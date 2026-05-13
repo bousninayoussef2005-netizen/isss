@@ -11,8 +11,9 @@
     "2": "seat_2"
   },
   "rfid_uid_to_student_id": {
-    "PENDING_SCAN_TAG_1": "241-7504",
-    "PENDING_SCAN_TAG_2": "REPLACE_STUDENT_ID"
+    "93BA9456": "241-7504",
+    "31FC9616": "656-5454",
+    "999EB402": "564-6616"
   },
   "test_barcodes": {
     "borrow_test": "52145645",
@@ -21,5 +22,5 @@
   "timeouts_seconds": {
     "barcode_then_rfid": 10
   },
-  "notes": "VERIFY seat_1/seat_2 and BK-002 barcode in Firebase Console. Replace PENDING_SCAN_* with real RFID UIDs. Copy to pi-config.local.json on the Pi only."
+  "notes": "RFID UIDs: Youssef 93BA9456→241-7504 (verify student doc id), Zayneb 31FC9616→656-5454, Ons 999EB402→564-6616. VERIFY seats/barcode in Firebase. Copy to pi-config.local.json on the Pi only."
 }
