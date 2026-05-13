@@ -80,7 +80,7 @@ static void handleRfid() {
   uidToHexUpper(mfrc522.uid, uidHex, sizeof(uidHex));
 
   mfrc522.PICC_HaltA();
-  mfrc522.PICC_StopCrypto1();
+  mfrc522.PCD_StopCrypto1();
 
   const uint32_t now = millis();
   if (strcmp(uidHex, lastRfidUid) == 0 && (now - lastRfidMs) < RFID_DEBOUNCE_MS)
