@@ -13,7 +13,7 @@ For **each** FSR / seat channel on the ESP32, record how it maps to a document i
 | # | Physical label (tape on chair / cable) | ESP32 channel / wire label | Firestore **document ID** | Field **`id`** (if different from doc ID) |
 |---|----------------------------------------|-----------------------------|-----------------------------|-------------------------------------------|
 | 1 | Chair / FSR #1 | *fill when wired* e.g. `ADC1` / `GPIO34` | `seat_1` | `seat_1` (VERIFY) |
-| 2 | Chair / FSR #2 | *fill when wired* | `seat_2` | `seat_2` (VERIFY) |
+| 2 | Chair / FSR #2 | `GPIO35` (ADC1) | `seat_2` | `seat_2` (VERIFY) |
 | 3 | *(add a row per extra FSR)* | | | |
 
 **Notes:**

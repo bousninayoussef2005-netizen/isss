@@ -10,6 +10,9 @@
     "1": "seat_1",
     "2": "seat_2"
   },
+  "seat_index_to_esp_gpio": {
+    "2": 35
+  },
   "rfid_uid_to_student_id": {
     "93BA9456": "241-7504",
     "31FC9616": "656-5454",
@@ -22,5 +25,5 @@
   "timeouts_seconds": {
     "barcode_then_rfid": 10
   },
-  "notes": "RFID UIDs: Youssef 93BA9456→241-7504 (verify student doc id), Zayneb 31FC9616→656-5454, Ons 999EB402→564-6616. VERIFY seats/barcode in Firebase. Copy to pi-config.local.json on the Pi only."
+  "notes": "Seat 2 FSR: ESP32 GPIO35. RFID: 93BA9456→241-7504 (verify), 31FC9616→656-5454, 999EB402→564-6616. VERIFY seats/barcode in Firebase. Copy to pi-config.local.json on the Pi only."
 }
