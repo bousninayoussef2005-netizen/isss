@@ -13,9 +13,9 @@ Message shapes:
     timer / reservation on that seat), then kiosk_auth_events rfid_scan. Disable via pi-config
     serial_bridge.release_seat_on_rfid_rescan: false.
   {"t":"barcode","code":"9782070793143"}  — optional "intent":"borrow"|"return" (default borrow) → kiosk_auth_events
-  {"t":"fsr","seat":2,"raw":1850}  — if seat not occupied, no write. If occupied + fsr_presence thresholds: updates fsrRaw,
-    fsrPresence; transition present→absent starts away_timers (same as web \"I'm leaving\"); transition to present clears active timer(s).
-    Disable timers: serial_bridge.fsr_start_away_timer: false. Timer length: timeouts_seconds.away_timer_seconds (default 60).
+  {"t":"fsr","seat":2,"raw":1850}  — occupied + fsr_presence: while **absent** (no pressure), ensure an **away_timers** row exists
+    (start if missing; idempotent if already running). While **present**, clear active away timers for that seat/student.
+    First FSR **absent** when fsrPresence was never set is ignored (baseline). Requires fsr_presence thresholds.
 """
 from __future__ import annotations
 
@@ -356,13 +356,17 @@ def handle_line(msg: dict, *, db, cfg: dict, dry_run: bool) -> None:
             sid_st = str(data.get("studentId"))
             sec = _away_timer_seconds(cfg)
             try:
-                if prev == "present" and new_pres == "absent":
-                    if _start_away_timer_for_fsr(db, logical_id, sid_st, sec):
-                        print(f"[bridge] fsr away timer started seat={logical_id} student={sid_st} ({sec}s)", flush=True)
-                elif new_pres == "present":
+                if new_pres == "present":
                     cleared = _clear_away_timers_for_fsr(db, logical_id, sid_st)
                     if cleared:
                         print(f"[bridge] fsr cleared {cleared} away timer(s) seat={logical_id}", flush=True)
+                elif new_pres == "absent":
+                    # Level: absent => ensure away timer (same as "no pressure while seated"). Skip only the very
+                    # first absent sample when fsrPresence was never set and no timer yet (avoid firing right after sit).
+                    if prev is None and not _has_active_away_timer(db, logical_id, sid_st):
+                        pass
+                    elif _start_away_timer_for_fsr(db, logical_id, sid_st, sec):
+                        print(f"[bridge] fsr away timer started seat={logical_id} student={sid_st} ({sec}s)", flush=True)
             except Exception as e:
                 print(f"[bridge] fsr away timer update failed: {e}", file=sys.stderr, flush=True)
         return
