@@ -46,5 +46,5 @@
     "release_seat_on_rfid_rescan": true
   },
   "firebase_credentials_path": "__SMARTLIB_HOME__/secrets/firestore-key.json",
-  "notes": "fsr_presence: ADC thresholds per seat index (merge with defaults). Pi only writes FSR to Firestore when seats.occupied && studentId. Tune pressure_on_raw > pressure_off_raw using logged fsrRaw. serial_bridge.release_seat_on_rfid_rescan: RFID frees seat. Never commit secrets."
+  "notes": "fsr_presence: ADC thresholds per seat index (merge with defaults). Pi only writes FSR to Firestore when seats.occupied && studentId. Tune pressure_on_raw > pressure_off_raw using logged fsrRaw. serial_bridge.release_seat_on_rfid_rescan: RFID frees seat. firebase_credentials_path may use __SMARTLIB_HOME__; Pi Python scripts expand it to ~/smartlib (or env SMARTLIB_HOME). Never commit secrets."
 }

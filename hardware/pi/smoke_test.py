@@ -38,7 +38,8 @@ def main() -> int:
     if not cred_path or not isinstance(cred_path, str):
         print("Config missing string firebase_credentials_path", file=sys.stderr)
         return 2
-    cred_path = Path(cred_path).expanduser().resolve()
+    root = os.environ.get("SMARTLIB_HOME", str(Path.home() / "smartlib"))
+    cred_path = Path(cred_path.replace("__SMARTLIB_HOME__", root)).expanduser().resolve()
     if not cred_path.is_file():
         print(f"Missing Firebase key file: {cred_path}", file=sys.stderr)
         return 3

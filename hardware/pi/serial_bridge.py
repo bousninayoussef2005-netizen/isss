@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
 from datetime import datetime, timezone
@@ -37,6 +38,16 @@ def load_config(path: Path) -> dict:
     if not raw.strip():
         raise ValueError(f"Empty config: {path}")
     return json.loads(raw)
+
+
+def resolve_firebase_credentials_path(cfg: dict) -> Path | None:
+    """Expand __SMARTLIB_HOME__ (from pi-config.example.json) to real ~/smartlib or $SMARTLIB_HOME."""
+    v = cfg.get("firebase_credentials_path")
+    if not v or not isinstance(v, str):
+        return None
+    root = os.environ.get("SMARTLIB_HOME", str(Path.home() / "smartlib"))
+    s = v.replace("__SMARTLIB_HOME__", root)
+    return Path(s).expanduser().resolve()
 
 
 def seat_doc_id(cfg: dict, seat: object) -> str | None:
@@ -298,11 +309,10 @@ def main() -> int:
 
     db = None
     if not args.dry_run:
-        cred_path = cfg.get("firebase_credentials_path")
-        if not cred_path or not isinstance(cred_path, str):
+        p = resolve_firebase_credentials_path(cfg)
+        if not p:
             print("firebase_credentials_path missing", file=sys.stderr)
             return 2
-        p = Path(cred_path).expanduser().resolve()
         if not p.is_file():
             print(f"Missing key file: {p}", file=sys.stderr)
             return 3

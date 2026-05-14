@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
 from datetime import datetime, timedelta, timezone
@@ -34,12 +35,20 @@ def load_config(path: Path) -> dict:
     return json.loads(raw)
 
 
+def resolve_firebase_credentials_path(cfg: dict) -> Path | None:
+    v = cfg.get("firebase_credentials_path")
+    if not v or not isinstance(v, str):
+        return None
+    root = os.environ.get("SMARTLIB_HOME", str(Path.home() / "smartlib"))
+    s = v.replace("__SMARTLIB_HOME__", root)
+    return Path(s).expanduser().resolve()
+
+
 def init_db(cfg: dict):
-    cred_path = cfg.get("firebase_credentials_path")
-    if not cred_path or not isinstance(cred_path, str):
+    p = resolve_firebase_credentials_path(cfg)
+    if not p:
         print("firebase_credentials_path missing", file=sys.stderr)
         raise SystemExit(2)
-    p = Path(cred_path).expanduser().resolve()
     if not p.is_file():
         print(f"Missing key file: {p}", file=sys.stderr)
         raise SystemExit(3)
