@@ -44,6 +44,6 @@
     "release_seat_on_rfid_rescan": true,
     "fsr_start_away_timer": true
   },
-  "firebase_credentials_path": "__SMARTLIB_HOME__/secrets/firestore-key.json",
-  "notes": "fsr_presence.mode \"zero\": raw>0 clears away timer (I'm back); raw<=0 starts away timer (I'm leaving) for each occupied seat in seat_index_to_seat_id. Omit mode or use threshold keys pressure_on_raw/off for ADC hysteresis instead. timeouts_seconds.away_timer_seconds; serial_bridge.fsr_start_away_timer / release_seat_on_rfid_rescan. firebase_credentials_path __SMARTLIB_HOME__ expanded on Pi. Never commit secrets."
+  "firebase_credentials_path": "__SMARTLIB_HOME__/secrets/firebase-adminsdk.json",
+  "notes": "On the Pi, serial_bridge and smoke_test read ~/smartlib/pi-config.local.json by default — set firebase_credentials_path there to the real key path (rename your downloaded *-firebase-adminsdk-*.json to firebase-adminsdk.json or point to its actual name). pi-config.example.json is only a repo template. __SMARTLIB_HOME__ expands to ~/smartlib or $SMARTLIB_HOME. FSR: fsr_presence.mode zero vs threshold keys; away_timer_seconds; serial_bridge flags. Never commit secrets."
 }
