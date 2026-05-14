@@ -112,7 +112,7 @@ Stop: **Ctrl+C**.
 
    - **`ping`:** no Firestore write (keeps serial alive only).
    - **`rfid`:** if that student already has **`seats.studentId`** set (same as web “has a seat”, including away state), the bridge **frees the seat** first (`occupied: false`, **`seat_transactions`** `leave`, clears **away_timers** / **reservations** on that seat), then adds **`kiosk_auth_events`** (`rfid_scan`). Turn off with **`serial_bridge.release_seat_on_rfid_rescan`: false** in `pi-config.local.json`.
-   - **`fsr`:** reads the **`seats`** doc; **if the seat is not occupied** (`occupied` / `studentId`), **no write** (FSR ignored for free seats). If occupied, updates **`fsrRaw`**, **`updatedAt`**, and when **`fsr_presence`** thresholds exist in `pi-config`, **`fsrPresence`**: `"present"` vs `"absent"` (hysteresis: `pressure_on_raw` / `pressure_off_raw`). The web map shows amber “Away · sensor” when occupied + absent; red “In use” when occupied + present or unknown. See **`pi-config.example.json`** → **`fsr_presence`**.
+   - **`fsr`:** (see above) When **`fsr_presence`** thresholds exist and **`serial_bridge.fsr_start_away_timer`** is true (default), a **present → absent** transition on an **occupied** seat **creates** an **`away_timers`** row (same fields as the web “I’m leaving” timer); **present** again **clears** active timers for that seat/student (`reason: "return"`). Set **`fsr_start_away_timer`: false** to only update **`fsrPresence`** without timers.
 
 4. **Verify:** Firebase Console → **`kiosk_auth_events`** / **`seats`** → watch new rows / field changes while you trigger events from the ESP32 (or paste test lines via a second serial tool only if you know what you are doing).
 

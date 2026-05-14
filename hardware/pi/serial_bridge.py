@@ -13,8 +13,9 @@ Message shapes:
     timer / reservation on that seat), then kiosk_auth_events rfid_scan. Disable via pi-config
     serial_bridge.release_seat_on_rfid_rescan: false.
   {"t":"barcode","code":"9782070793143"}  — optional "intent":"borrow"|"return" (default borrow) → kiosk_auth_events
-  {"t":"fsr","seat":2,"raw":1850}  — if seat is NOT occupied, no Firestore write. If occupied, updates fsrRaw,
-    updatedAt, and fsrPresence (\"present\"|\"absent\") when pi-config fsr_presence thresholds exist.
+  {"t":"fsr","seat":2,"raw":1850}  — if seat not occupied, no write. If occupied + fsr_presence thresholds: updates fsrRaw,
+    fsrPresence; transition present→absent starts away_timers (same as web \"I'm leaving\"); transition to present clears active timer(s).
+    Disable timers: serial_bridge.fsr_start_away_timer: false. Timer length: timeouts_seconds.away_timer_seconds (default 60).
 """
 from __future__ import annotations
 
@@ -94,6 +95,70 @@ def _next_fsr_presence(raw: int, prev: str | None, on_t: int, off_t: int) -> str
     if prev == "absent":
         return "present" if raw >= on_t else "absent"
     return "present" if raw >= (on_t + off_t) // 2 else "absent"
+
+
+def _away_timer_seconds(cfg: dict) -> int:
+    to = cfg.get("timeouts_seconds") or {}
+    if isinstance(to, dict) and to.get("away_timer_seconds") is not None:
+        try:
+            return max(15, int(to["away_timer_seconds"]))
+        except (TypeError, ValueError):
+            pass
+    return 60
+
+
+def _fsr_start_away_timer_enabled(cfg: dict) -> bool:
+    sb = cfg.get("serial_bridge")
+    if isinstance(sb, dict) and "fsr_start_away_timer" in sb:
+        return bool(sb["fsr_start_away_timer"])
+    return True
+
+
+def _has_active_away_timer(db, seat_id: str, student_id: str) -> bool:
+    now_ms = int(time.time() * 1000)
+    for t in db.collection("away_timers").where("seatId", "==", seat_id).stream():
+        td = dict(t.to_dict() or {})
+        if str(td.get("studentId") or "") != student_id:
+            continue
+        if not td.get("active", False):
+            continue
+        if (td.get("expiresAt") or 0) > now_ms:
+            return True
+    return False
+
+
+def _start_away_timer_for_fsr(db, seat_id: str, student_id: str, seconds: int) -> bool:
+    """Same shape as Firebase.js startAwayTimer. Returns True if a new away_timers doc was added."""
+    if _has_active_away_timer(db, seat_id, student_id):
+        return False
+    now_ms = int(time.time() * 1000)
+    db.collection("away_timers").add(
+        {
+            "seatId": seat_id,
+            "studentId": student_id,
+            "active": True,
+            "startedAt": now_ms,
+            "expiresAt": now_ms + seconds * 1000,
+        }
+    )
+    return True
+
+
+def _clear_away_timers_for_fsr(db, seat_id: str, student_id: str) -> int:
+    """Mirror Firebase.js clearAwayTimer (reason return). Returns number cleared."""
+    now_ms = int(time.time() * 1000)
+    n = 0
+    for t in db.collection("away_timers").where("seatId", "==", seat_id).stream():
+        td = dict(t.to_dict() or {})
+        if str(td.get("studentId") or "") != student_id:
+            continue
+        if not td.get("active", False):
+            continue
+        if (td.get("expiresAt") or 0) <= now_ms:
+            continue
+        t.reference.update({"active": False, "endedAt": now_ms, "reason": "return"})
+        n += 1
+    return n
 
 
 def student_for_uid(cfg: dict, uid: str) -> str | None:
@@ -286,6 +351,20 @@ def handle_line(msg: dict, *, db, cfg: dict, dry_run: bool) -> None:
             return
         pr = updates.get("fsrPresence", "—")
         print(f"[bridge] fsr seat={logical_id} raw={raw_int} presence={pr}", flush=True)
+        new_pres = updates.get("fsrPresence")
+        if th and new_pres and _fsr_start_away_timer_enabled(cfg):
+            sid_st = str(data.get("studentId"))
+            sec = _away_timer_seconds(cfg)
+            try:
+                if prev == "present" and new_pres == "absent":
+                    if _start_away_timer_for_fsr(db, logical_id, sid_st, sec):
+                        print(f"[bridge] fsr away timer started seat={logical_id} student={sid_st} ({sec}s)", flush=True)
+                elif new_pres == "present":
+                    cleared = _clear_away_timers_for_fsr(db, logical_id, sid_st)
+                    if cleared:
+                        print(f"[bridge] fsr cleared {cleared} away timer(s) seat={logical_id}", flush=True)
+            except Exception as e:
+                print(f"[bridge] fsr away timer update failed: {e}", file=sys.stderr, flush=True)
         return
 
     print(f"[bridge] unknown t={t!r} msg={msg!r}", file=sys.stderr, flush=True)

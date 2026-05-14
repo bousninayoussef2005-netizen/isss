@@ -36,15 +36,17 @@
     "the_american": "9780140390827"
   },
   "timeouts_seconds": {
-    "barcode_then_rfid": 10
+    "barcode_then_rfid": 10,
+    "away_timer_seconds": 60
   },
   "kiosk": {
     "max_active_borrows": 3,
     "borrow_due_days": 14
   },
   "serial_bridge": {
-    "release_seat_on_rfid_rescan": true
+    "release_seat_on_rfid_rescan": true,
+    "fsr_start_away_timer": true
   },
   "firebase_credentials_path": "__SMARTLIB_HOME__/secrets/firestore-key.json",
-  "notes": "fsr_presence: ADC thresholds per seat index (merge with defaults). Pi only writes FSR to Firestore when seats.occupied && studentId. Tune pressure_on_raw > pressure_off_raw using logged fsrRaw. serial_bridge.release_seat_on_rfid_rescan: RFID frees seat. firebase_credentials_path may use __SMARTLIB_HOME__; Pi Python scripts expand it to ~/smartlib (or env SMARTLIB_HOME). Never commit secrets."
+  "notes": "fsr_presence + serial_bridge.fsr_start_away_timer: present→absent on occupied seat starts away_timers (length timeouts_seconds.away_timer_seconds, default 60); pressure present clears timers. Pi only writes FSR when seat is occupied. Tune ADC thresholds from logged fsrRaw. RFID seat release: serial_bridge.release_seat_on_rfid_rescan. firebase_credentials_path: __SMARTLIB_HOME__ expanded by Pi scripts. Never commit secrets."
 }
