@@ -9,7 +9,9 @@ Phase 3: each RFID row includes pi_worker_state \"pending\" so hardware/pi/kiosk
 
 Message shapes:
   {"t":"ping"}  — no Firestore write
-  {"t":"rfid","uid":"93BA9456"}  — kiosk_auth_events (action, student_id, uid, timestamp, pi_worker_state)
+  {"t":"rfid","uid":"93BA9456"}  — if student already holds a seat, seat is freed first (leave tx, clear away
+    timer / reservation on that seat), then kiosk_auth_events rfid_scan. Disable via pi-config
+    serial_bridge.release_seat_on_rfid_rescan: false.
   {"t":"barcode","code":"9782070793143"}  — optional "intent":"borrow"|"return" (default borrow) → kiosk_auth_events
   {"t":"fsr","seat":2,"raw":1850}  — updates seats/{id} fsrRaw + updatedAt only
 """
@@ -18,6 +20,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -49,6 +52,74 @@ def student_for_uid(cfg: dict, uid: str) -> str | None:
     return str(sid) if sid else None
 
 
+def _release_seat_on_rfid_rescan(cfg: dict) -> bool:
+    sb = cfg.get("serial_bridge")
+    if isinstance(sb, dict) and "release_seat_on_rfid_rescan" in sb:
+        return bool(sb["release_seat_on_rfid_rescan"])
+    return True
+
+
+def release_assigned_seats_for_student(db, student_id: str, *, dry_run: bool) -> list[str]:
+    """
+    Free every seat where studentId matches (occupied or away-locked same as web: student still on seat doc).
+    Mirrors Firebase.js releaseSeatByStudent + clearAwayTimer + cancel reservation on that seat.
+    """
+    if dry_run or db is None:
+        return []
+    now_iso = datetime.now(timezone.utc).isoformat()
+    now_ms = int(time.time() * 1000)
+    released: list[str] = []
+
+    for snap in db.collection("seats").where("studentId", "==", student_id).stream():
+        data = dict(snap.to_dict() or {})
+        logical_id = str(data.get("id") or snap.id)
+        snap.reference.update({"occupied": False, "studentId": None})
+        released.append(logical_id)
+        db.collection("seat_transactions").add(
+            {
+                "seatId": logical_id,
+                "studentId": student_id,
+                "type": "leave",
+                "timestamp": now_iso,
+            }
+        )
+
+    if not released:
+        return released
+
+    released_set = set(released)
+    for t in db.collection("away_timers").where("studentId", "==", student_id).stream():
+        td = dict(t.to_dict() or {})
+        if str(td.get("seatId") or "") not in released_set:
+            continue
+        if not td.get("active", False):
+            continue
+        t.reference.update({"active": False, "endedAt": now_ms, "reason": "rfid_leave"})
+
+    for r in db.collection("reservations").where("studentId", "==", student_id).stream():
+        rd = dict(r.to_dict() or {})
+        if not rd.get("active", False):
+            continue
+        seat_sid = str(rd.get("seatId") or "")
+        if seat_sid not in released_set:
+            continue
+        r.reference.update({"active": False, "cancelledAt": now_iso, "reason": "rfid_leave"})
+        try:
+            db.collection("reservation_slots").document(seat_sid).delete()
+        except Exception:
+            pass
+        db.collection("seat_transactions").add(
+            {
+                "seatId": seat_sid,
+                "studentId": student_id,
+                "type": "cancel",
+                "timestamp": now_iso,
+            }
+        )
+
+    return released
+
+
 def handle_line(msg: dict, *, db, cfg: dict, dry_run: bool) -> None:
     t = msg.get("t")
     if t == "ping":
@@ -64,6 +135,13 @@ def handle_line(msg: dict, *, db, cfg: dict, dry_run: bool) -> None:
         if not sid:
             print(f"[bridge] rfid unknown uid={uid!r}", file=sys.stderr, flush=True)
             return
+        if _release_seat_on_rfid_rescan(cfg) and db is not None:
+            try:
+                freed = release_assigned_seats_for_student(db, sid, dry_run=dry_run)
+                if freed:
+                    print(f"[bridge] rfid released seat(s) {', '.join(freed)} for student {sid}", flush=True)
+            except Exception as e:
+                print(f"[bridge] rfid seat release failed (still emitting scan): {e}", file=sys.stderr, flush=True)
         payload = {
             "action": "rfid_scan",
             "student_id": sid,
@@ -181,27 +259,44 @@ def main() -> int:
     mode = "DRY-RUN" if args.dry_run else "LIVE"
     print(f"[bridge] {mode} serial {port} @ {baud}", file=sys.stderr, flush=True)
 
-    with serial.Serial(port, baud, timeout=0.5) as s:
-        s.reset_input_buffer()
-        while True:
-            raw = s.readline()
-            if not raw:
-                continue
-            line = raw.decode("utf-8", errors="replace").strip()
-            if not line:
-                continue
-            try:
-                msg = json.loads(line)
-            except json.JSONDecodeError as e:
-                print(f"[bridge] bad json: {e}: {line[:120]!r}", file=sys.stderr, flush=True)
-                continue
-            if not isinstance(msg, dict):
-                print(f"[bridge] not an object: {line[:120]!r}", file=sys.stderr, flush=True)
-                continue
-            try:
-                handle_line(msg, db=db, cfg=cfg, dry_run=args.dry_run)
-            except Exception as e:
-                print(f"[bridge] handler error: {e}", file=sys.stderr, flush=True)
+    # Re-open serial after transient USB errors (RFID power dip, cable) instead of exiting.
+    while True:
+        try:
+            with serial.Serial(port, baud, timeout=0.5) as s:
+                s.reset_input_buffer()
+                print(f"[bridge] opened {port}", file=sys.stderr, flush=True)
+                while True:
+                    try:
+                        raw = s.readline()
+                    except (serial.SerialException, OSError) as e:
+                        print(f"[bridge] serial read error (will reopen): {e}", file=sys.stderr, flush=True)
+                        break
+                    if not raw:
+                        continue
+                    line = raw.decode("utf-8", errors="replace").strip()
+                    if not line:
+                        continue
+                    try:
+                        msg = json.loads(line)
+                    except json.JSONDecodeError as e:
+                        print(
+                            f"[bridge] bad json: {e}: {line[:120]!r}\n"
+                            "  hint: ESP32 must send one JSON object per line at 115200; only one program may use the port;\n"
+                            "  match pi-config serial.baud to firmware; bad lines often mean wrong baud or USB power glitch on scan.",
+                            file=sys.stderr,
+                            flush=True,
+                        )
+                        continue
+                    if not isinstance(msg, dict):
+                        print(f"[bridge] not an object: {line[:120]!r}", file=sys.stderr, flush=True)
+                        continue
+                    try:
+                        handle_line(msg, db=db, cfg=cfg, dry_run=args.dry_run)
+                    except Exception as e:
+                        print(f"[bridge] handler error: {e}", file=sys.stderr, flush=True)
+        except (serial.SerialException, OSError) as e:
+            print(f"[bridge] serial open failed: {e} — retry in 2s", file=sys.stderr, flush=True)
+        time.sleep(2.0)
 
 
 if __name__ == "__main__":

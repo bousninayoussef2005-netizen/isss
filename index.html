@@ -18,6 +18,8 @@
 <div id="login-screen" class="login-screen">
   <div class="login-container">
     <div class="login-brand"><div class="login-logo">📚</div><h1>SmartLib</h1><p>IoT Library Management System</p></div>
+    <p class="kiosk-entry-row" id="kiosk-entry-row"><button type="button" class="link-button" onclick="enterKioskWaitScreen()">Library kiosk (RFID)</button></p>
+    <div id="normal-login-flow">
     <div class="role-toggle">
       <button class="role-btn active" id="role-student-btn" onclick="switchRole('student')">🎓 Student</button>
       <button class="role-btn" id="role-staff-btn" onclick="switchRole('staff')">🔑 Staff</button>
@@ -60,6 +62,13 @@
       </div>
     </div>
     <div class="login-hint">Staff: <code>admin@smartlib.edu</code> / <code>admin123</code> · Student sign-up: MedTech (<code>@medtech.tn</code> + dept) or MSB (<code>@msb.tn</code>); ID <code>###-####</code> for both.</div>
+    </div>
+    <div id="kiosk-wait-panel" class="login-card kiosk-wait-panel" style="display:none">
+      <h2 class="kiosk-wait-title">Library kiosk</h2>
+      <p class="kiosk-wait-msg">Scan your card on the RFID reader. You will be signed in briefly to pick a seat.</p>
+      <p id="kiosk-wait-status" class="kiosk-wait-status" aria-live="polite"></p>
+      <button type="button" class="login-btn login-btn-secondary" onclick="exitKioskToNormalLogin()">Use email / staff sign-in instead</button>
+    </div>
   </div>
 </div>
 
@@ -73,6 +82,7 @@
       <button class="logout-btn" onclick="logout()">Log out</button>
     </div>
   </div>
+  <div id="kiosk-session-banner" class="kiosk-session-banner" style="display:none" role="status" aria-live="polite"></div>
   <div class="tab-row" id="tab-row"></div>
   <div class="main" id="main-content"></div>
 </div>
@@ -87,6 +97,7 @@
 <script src="js/students.js"></script>
 <script src="js/alerts-issues.js"></script>
 <script src="js/student-books.js"></script>
+<script src="js/kiosk.js"></script>
 <script type="module" src="Firebase.js"></script>
 </body>
 </html>

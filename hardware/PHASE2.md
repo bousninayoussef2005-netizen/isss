@@ -111,7 +111,7 @@ Stop: **Ctrl+C**.
 3. **What the reference script does** (read `serial_bridge.py` header comment if behavior changes):
 
    - **`ping`:** no Firestore write (keeps serial alive only).
-   - **`rfid`:** adds a document to **`kiosk_auth_events`** with `action`, `student_id`, `uid`, `timestamp` so you can trace scans in the console.
+   - **`rfid`:** if that student already has **`seats.studentId`** set (same as web “has a seat”, including away state), the bridge **frees the seat** first (`occupied: false`, **`seat_transactions`** `leave`, clears **away_timers** / **reservations** on that seat), then adds **`kiosk_auth_events`** (`rfid_scan`). Turn off with **`serial_bridge.release_seat_on_rfid_rescan`: false** in `pi-config.local.json`.
    - **`fsr`:** **`update`** on the **`seats`** document id from your map (`occupied` / `studentId` are **not** changed here — only telemetry like `fsrRaw` + `updatedAt` so the web app keeps working as today).
 
 4. **Verify:** Firebase Console → **`kiosk_auth_events`** / **`seats`** → watch new rows / field changes while you trigger events from the ESP32 (or paste test lines via a second serial tool only if you know what you are doing).

@@ -1,5 +1,9 @@
 // Paste inside: service cloud.firestore { match /databases/{database}/documents { ... } }
 // Denies browser/mobile SDK access to kiosk queue; Pi Admin SDK is not affected by rules.
+//
+// NOTE: The SmartLib web "Library kiosk (RFID)" mode needs the browser to READ kiosk_auth_events.
+// If you use this deny-all block, the iPad kiosk listener will fail. Use read:true + write:false
+// for lab kiosks instead (see hardware/pi/FIRESTORE-LAB.md).
 
 match /kiosk_auth_events/{id} {
   allow read, write: if false;

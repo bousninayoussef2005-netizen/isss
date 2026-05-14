@@ -184,7 +184,7 @@ flowchart TD
 - [ ] Pi: RFID UID ↔ `students.id` table (Firestore or local cache from `students`).
 - [ ] Pi: FSR calibration per seat (thresholds + hysteresis + debounce ms).
 - [ ] Firestore: service account on Pi; tight security rules for kiosk collections.
-- [ ] iPad SmartLib: **kiosk mode** + **15s session** + Firestore listener for Pi-written session docs.
+- [x] iPad SmartLib: **kiosk mode** — login screen **Library kiosk (RFID)** or URL **`?kiosk=1`** listens for **`kiosk_auth_events`** (`action: rfid_scan`); short session then auto sign-out (see **`js/kiosk.js`**, **`Firebase.js`**). Firestore must **allow client read** on that collection (see **`hardware/pi/FIRESTORE-LAB.md`**).
 - [ ] QA: borrow limit 3, 4th borrow rejected; return path; RFID release; FSR blue ↔ away ↔ timeout ↔ red.
 
 ---

@@ -15,6 +15,10 @@ Either:
 - **Clone** this repo on the Pi and `cd` into `hardware/pi`, or  
 - **Copy** the folder `hardware/pi/` (this directory) to the Pi with USB / SCP.
 
+**Refresh `~/smartlib/bin` from GitHub `main`** (after you push your changes): on the Pi, from this directory run **`chmod +x refresh_pi_bin.sh && ./refresh_pi_bin.sh`**. It re-downloads `serial_bridge.py`, `kiosk_worker.py`, `barcode_hid_to_kiosk.py`, `serial_listen.py`, and `smoke_test.py` via `wget` (does not touch `pi-config.local.json` or secrets). Override the URL with **`SMARTLIB_RAW_BASE=...`** if you use a fork or branch raw tree.
+
+**From Windows (same LAN as the Pi):** copy this folder’s scripts over SSH with **`sync_bin_to_pi.ps1`** (OpenSSH `scp`/`ssh` required): `powershell -ExecutionPolicy Bypass -File hardware\pi\sync_bin_to_pi.ps1 -PiHost 192.168.x.x` (optional **`-Restart`** to restart systemd units). Set **`SMARTLIB_PI_HOST`** if you prefer not to pass **`-PiHost`** each time.
+
 ## 2) Run the setup script
 
 ```bash

@@ -138,7 +138,15 @@ function loginStaff() {
 function logout() {
   currentUser = null;
   window._dueSoonNotifiedKey = null;
-  if (timerInterval) clearInterval(timerInterval);
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  if (window.clearKioskSessionTimers) window.clearKioskSessionTimers();
+  if (window._kioskDisplayMode && window.showKioskWaitAfterSessionEnd) {
+    window.showKioskWaitAfterSessionEnd();
+    return;
+  }
   document.getElementById("app-shell").style.display = "none";
   document.getElementById("login-screen").style.display = "flex";
   document.querySelectorAll("#login-screen input").forEach(i => { if (i.type !== "radio") i.value = ""; });

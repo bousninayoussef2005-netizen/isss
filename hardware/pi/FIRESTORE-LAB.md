@@ -34,6 +34,17 @@ match /kiosk_auth_events/{id} {
 
 If the website must show `kiosk_auth_events` to staff, replace with `request.auth != null` + your custom claims.
 
+**iPad / library kiosk mode** (SmartLib web: “Open library kiosk”) listens for **new** `kiosk_auth_events` rows with `action == "rfid_scan"` so the Pi’s serial bridge can drive sign-in without email. The browser **must be allowed to read** `kiosk_auth_events` (at least `read`), or the listener will fail. A common lab rule is:
+
+```text
+match /kiosk_auth_events/{id} {
+  allow read: if true;
+  allow write: if false;
+}
+```
+
+Tighten later (e.g. only in kiosk hours, or App Check) if you expose this project beyond the lab.
+
 ## 4) Audit
 
 Firebase Console → **Firestore** → usage; GCP → **Logging** → filter by service account email to see who wrote what.

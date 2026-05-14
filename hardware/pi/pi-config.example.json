@@ -34,6 +34,9 @@
     "max_active_borrows": 3,
     "borrow_due_days": 14
   },
+  "serial_bridge": {
+    "release_seat_on_rfid_rescan": true
+  },
   "firebase_credentials_path": "__SMARTLIB_HOME__/secrets/firestore-key.json",
-  "notes": "ESP32 on serial.port_linux (e.g. ttyUSB0). USB-serial barcode scanner: set barcode_serial to the other tty (e.g. ttyUSB1) and run barcode_hid_to_kiosk.py --mode serial. Never commit secrets."
+  "notes": "serial_bridge.release_seat_on_rfid_rescan (default true): if student already has seats.occupied + studentId, RFID scan frees the seat (leave tx, clear away timer / reservation on that seat) then emits rfid_scan for kiosk. ESP32 on serial.port_linux. Never commit secrets."
 }

@@ -10,6 +10,8 @@ import {
   getDocs,
   query,
   where,
+  orderBy,
+  limit,
   updateDoc,
   deleteDoc,
   runTransaction
@@ -138,6 +140,79 @@ window._startFirebaseListeners = function () {
   listenReservations();
   listenAwayTimers();
   listenStudents();
+};
+
+/** Seconds for RFID-driven “kiosk” student session (pick a seat). */
+window.KIOSK_SESSION_SECONDS = 15;
+
+let _kioskRfidUnsub = null;
+let _kioskRfidInitialSync = true;
+const _kioskSeenEventDocIds = new Set();
+
+function resetKioskRfidListenerState() {
+  _kioskRfidInitialSync = true;
+  _kioskSeenEventDocIds.clear();
+}
+
+window.stopKioskRfidListener = function () {
+  if (_kioskRfidUnsub) {
+    try {
+      _kioskRfidUnsub();
+    } catch (_) {}
+    _kioskRfidUnsub = null;
+  }
+  resetKioskRfidListenerState();
+};
+
+/**
+ * Listen for new kiosk_auth_events (rfid_scan). Requires Firestore rules to allow client read
+ * on kiosk_auth_events (see hardware/pi/FIRESTORE-LAB.md).
+ */
+window.startKioskRfidListener = function (onRfidScan) {
+  window.stopKioskRfidListener();
+  resetKioskRfidListenerState();
+  const q = query(collection(db, "kiosk_auth_events"), orderBy("timestamp", "desc"), limit(25));
+  _kioskRfidUnsub = onSnapshot(
+    q,
+    (snap) => {
+      if (_kioskRfidInitialSync) {
+        _kioskRfidInitialSync = false;
+        return;
+      }
+      snap.docChanges().forEach((ch) => {
+        if (ch.type !== "added" && ch.type !== "modified") return;
+        const docId = ch.doc.id;
+        if (_kioskSeenEventDocIds.has(docId)) return;
+        const d = ch.doc.data() || {};
+        if (d.action !== "rfid_scan" || !d.student_id) return;
+        _kioskSeenEventDocIds.add(docId);
+        if (_kioskSeenEventDocIds.size > 400) {
+          _kioskSeenEventDocIds.clear();
+        }
+        onRfidScan({ studentId: String(d.student_id).trim(), uid: d.uid || "", docId, raw: d });
+      });
+    },
+    (err) => {
+      console.error("kiosk_auth_events listener error:", err);
+      if (window.showToast) {
+        window.showToast(
+          "Kiosk: cannot read kiosk_auth_events (Firestore rules / index). See FIRESTORE-LAB.md.",
+          "danger",
+          8000
+        );
+      }
+    }
+  );
+};
+
+window.fetchStudentById = async function (studentId) {
+  const id = String(studentId || "").trim();
+  if (!id) return null;
+  const local = (window.students || []).find((s) => s.id === id);
+  if (local) return local;
+  const r = await getDoc(doc(db, "students", id));
+  if (!r.exists()) return null;
+  return { firebaseId: r.id, ...r.data() };
 };
 
 window.createStudentAccount = async function ({ id, name, email, password, department, institution }) {

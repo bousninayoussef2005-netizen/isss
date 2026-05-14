@@ -14,6 +14,8 @@ Install (HID only):  sudo apt install python3-evdev && sudo usermod -aG input $U
 
 List HID:  python3 barcode_hid_to_kiosk.py --list
 
+List USB-serial nodes:  python3 barcode_hid_to_kiosk.py --list-serial
+
 Serial:  python3 barcode_hid_to_kiosk.py --config ~/smartlib/pi-config.local.json --mode serial
          python3 barcode_hid_to_kiosk.py --config ... --mode serial --port /dev/ttyUSB1 --baud 9600
 
@@ -155,6 +157,18 @@ def run_hid(device_path: str, cfg: dict, db, *, dry_run: bool, intent_default: s
     return 0
 
 
+def list_serial_ports() -> int:
+    """Print common USB-serial device nodes (scanner / ESP32 adapters)."""
+    dev = Path("/dev")
+    names = sorted({p.name for p in dev.glob("ttyUSB*")} | {p.name for p in dev.glob("ttyACM*")})
+    if not names:
+        print("No /dev/ttyUSB* or /dev/ttyACM* found. Is USB connected?", flush=True)
+        return 1
+    for n in names:
+        print(f"/dev/{n}", flush=True)
+    return 0
+
+
 def run_serial(cfg: dict, db, *, dry_run: bool, intent_default: str) -> int:
     try:
         import serial
@@ -174,7 +188,26 @@ def run_serial(cfg: dict, db, *, dry_run: bool, intent_default: str) -> int:
         return 2
 
     print(f"[barcode-hid] serial {port} @ {baud}", flush=True)
-    with serial.Serial(port, baud, timeout=0.3) as ser:
+    if not Path(port).exists():
+        print(
+            f"[barcode-hid] ERROR: {port!r} does not exist.\n"
+            "  1) Plug in the scanner USB cable.\n"
+            "  2) Run:  python3 .../barcode_hid_to_kiosk.py --list-serial\n"
+            "     or:   ls /dev/ttyUSB* /dev/ttyACM*\n"
+            "  3) Set barcode_serial.port_linux in pi-config (or --port /dev/ttyACM0 etc.).",
+            file=sys.stderr,
+            flush=True,
+        )
+        return 3
+
+    try:
+        ser = serial.Serial(port, baud, timeout=0.3)
+    except (OSError, serial.SerialException) as e:
+        print(f"[barcode-hid] ERROR: could not open {port!r}: {e}", file=sys.stderr, flush=True)
+        print("  Check dialout group: sudo usermod -aG dialout $USER  (then re-login)", file=sys.stderr, flush=True)
+        return 3
+
+    with ser:
         ser.reset_input_buffer()
         while True:
             raw = ser.readline()
@@ -225,10 +258,13 @@ def main() -> int:
     ap.add_argument("--intent", default="borrow", choices=("borrow", "return"))
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--list", action="store_true", help="List /dev/input/event* names and exit")
+    ap.add_argument("--list-serial", action="store_true", help="List /dev/ttyUSB* /dev/ttyACM* and exit")
     args = ap.parse_args()
 
     if args.list:
         return list_input_devices()
+    if args.list_serial:
+        return list_serial_ports()
 
     cfg = load_config(Path(args.config).expanduser().resolve())
 
@@ -245,10 +281,10 @@ def main() -> int:
             bs["baud"] = args.baud
         cfg_merged["barcode_serial"] = bs
         try:
-            run_serial(cfg_merged, db, dry_run=args.dry_run, intent_default=args.intent)
+            return run_serial(cfg_merged, db, dry_run=args.dry_run, intent_default=args.intent)
         except KeyboardInterrupt:
             print("\n[barcode-hid] stopped", flush=True)
-        return 0
+            return 0
 
     devpath = args.device.strip()
     if not devpath:
