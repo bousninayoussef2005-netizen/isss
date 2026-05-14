@@ -2,6 +2,11 @@ const expiringReservations = new Set();
 const expiringAwayTimers = new Set();
 function awaySecondsLeft(t) { return Math.max(0, Math.floor(((t.expiresAt || 0) - Date.now()) / 1000)); }
 
+/** Pi + FSR: occupied seat with no pressure (serial_bridge sets fsrPresence "absent"). Vacant seats never set this. */
+function seatFsrHardwareAway(s) {
+  return !!(s && s.occupied && s.fsrPresence === "absent");
+}
+
 function tickTimers() {
   awayTimers.forEach(async (t) => {
     const left = awaySecondsLeft(t);
@@ -212,6 +217,10 @@ function renderSeatsAdmin() {
     const t = awayTimers.find(x => x.seatId === s.id && awaySecondsLeft(x) > 0);
     const res = reservations.find(r => r && r.seatId === s.id && r.active && ((r.expiresAt || 0) - Date.now()) > 0);
     if (t) { const left = awaySecondsLeft(t); const u = left <= TIMER_WARNING; d.className = "seat warning-seat"; d.innerHTML = `<span class="seat-icon">⏱️</span>${s.id}<span class="seat-label">${t.studentId}</span><div class="seat-timer-badge ${u ? "urgent" : ""}">${formatTime(left)}</div>`; }
+    else if (s.occupied && seatFsrHardwareAway(s)) {
+      d.className = "seat warning-seat";
+      d.innerHTML = `<span class="seat-icon">⏱️</span>${s.id}<span class="seat-label">Away · sensor</span><span class="seat-label" style="display:block;font-size:11px;margin-top:2px">${s.studentId || ""}</span>`;
+    }
     else if (res) {
       const left = Math.max(0, Math.floor(((res.expiresAt || 0) - Date.now()) / 1000));
       d.className = "seat reserved";
@@ -348,6 +357,11 @@ function renderStudentSeatView() {
       if (awayIsMine) {
         d.innerHTML += `<button class="btn btn-green btn-sm" style="margin-top:6px" onclick="event.stopPropagation();stuReturn()">I'm back</button>`;
       }
+    }
+    else if (s.occupied && seatFsrHardwareAway(s)) {
+      const mine = currentUser.seatId === s.id && currentUser.id === s.studentId;
+      d.className = mine ? "seat mine warning-seat" : "seat warning-seat";
+      d.innerHTML = `<span class="seat-icon">⏱️</span>${s.id}<span class="seat-label">${mine ? "Your seat · empty" : "Away · sensor"}</span><span class="seat-label" style="display:block;font-size:11px;margin-top:2px">${s.studentId || ""}</span>`;
     }
     else if (res) {
       const left = Math.max(0, Math.floor(((res.expiresAt || 0) - Date.now()) / 1000));

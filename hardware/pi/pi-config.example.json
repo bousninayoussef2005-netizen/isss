@@ -14,6 +14,14 @@
     "1": "seat_1",
     "2": "seat_2"
   },
+  "fsr_presence": {
+    "defaults": {
+      "pressure_on_raw": 1200,
+      "pressure_off_raw": 900
+    },
+    "1": {},
+    "2": {}
+  },
   "seat_index_to_esp_gpio": {
     "2": 35
   },
@@ -38,5 +46,5 @@
     "release_seat_on_rfid_rescan": true
   },
   "firebase_credentials_path": "__SMARTLIB_HOME__/secrets/firestore-key.json",
-  "notes": "serial_bridge.release_seat_on_rfid_rescan (default true): if student already has seats.occupied + studentId, RFID scan frees the seat (leave tx, clear away timer / reservation on that seat) then emits rfid_scan for kiosk. ESP32 on serial.port_linux. Never commit secrets."
+  "notes": "fsr_presence: ADC thresholds per seat index (merge with defaults). Pi only writes FSR to Firestore when seats.occupied && studentId. Tune pressure_on_raw > pressure_off_raw using logged fsrRaw. serial_bridge.release_seat_on_rfid_rescan: RFID frees seat. Never commit secrets."
 }

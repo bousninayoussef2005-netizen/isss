@@ -13,7 +13,8 @@ Message shapes:
     timer / reservation on that seat), then kiosk_auth_events rfid_scan. Disable via pi-config
     serial_bridge.release_seat_on_rfid_rescan: false.
   {"t":"barcode","code":"9782070793143"}  — optional "intent":"borrow"|"return" (default borrow) → kiosk_auth_events
-  {"t":"fsr","seat":2,"raw":1850}  — updates seats/{id} fsrRaw + updatedAt only
+  {"t":"fsr","seat":2,"raw":1850}  — if seat is NOT occupied, no Firestore write. If occupied, updates fsrRaw,
+    updatedAt, and fsrPresence (\"present\"|\"absent\") when pi-config fsr_presence thresholds exist.
 """
 from __future__ import annotations
 
@@ -45,6 +46,45 @@ def seat_doc_id(cfg: dict, seat: object) -> str | None:
     return str(sid) if sid else None
 
 
+def _fsr_seat_index_key(seat: object) -> str:
+    if isinstance(seat, (int, float)):
+        return str(int(seat))
+    return str(seat).strip()
+
+
+def _fsr_presence_thresholds(cfg: dict, seat_key: str) -> tuple[int, int] | None:
+    """Returns (pressure_on_raw, pressure_off_raw) for hysteresis, or None if not configured."""
+    fp = cfg.get("fsr_presence")
+    if not isinstance(fp, dict):
+        return None
+    defaults: dict = {}
+    d = fp.get("defaults")
+    if isinstance(d, dict):
+        defaults = dict(d)
+    seat_cfg = fp.get(seat_key)
+    if seat_cfg is False:
+        return None
+    merged = {**defaults}
+    if isinstance(seat_cfg, dict) and seat_cfg:
+        merged = {**defaults, **seat_cfg}
+    try:
+        on_t = int(merged["pressure_on_raw"])
+        off_t = int(merged["pressure_off_raw"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    if on_t <= off_t:
+        return None
+    return on_t, off_t
+
+
+def _next_fsr_presence(raw: int, prev: str | None, on_t: int, off_t: int) -> str:
+    if prev == "present":
+        return "absent" if raw < off_t else "present"
+    if prev == "absent":
+        return "present" if raw >= on_t else "absent"
+    return "present" if raw >= (on_t + off_t) // 2 else "absent"
+
+
 def student_for_uid(cfg: dict, uid: str) -> str | None:
     uid = (uid or "").strip().upper()
     m = cfg.get("rfid_uid_to_student_id") or {}
@@ -73,7 +113,7 @@ def release_assigned_seats_for_student(db, student_id: str, *, dry_run: bool) ->
     for snap in db.collection("seats").where("studentId", "==", student_id).stream():
         data = dict(snap.to_dict() or {})
         logical_id = str(data.get("id") or snap.id)
-        snap.reference.update({"occupied": False, "studentId": None})
+        snap.reference.update({"occupied": False, "studentId": None, "fsrPresence": None})
         released.append(logical_id)
         db.collection("seat_transactions").add(
             {
@@ -196,28 +236,45 @@ def handle_line(msg: dict, *, db, cfg: dict, dry_run: bool) -> None:
         except (TypeError, ValueError):
             print(f"[bridge] fsr bad raw={raw!r}", file=sys.stderr, flush=True)
             return
-        updates = {
-            "fsrRaw": raw_int,
-            "updatedAt": datetime.now(timezone.utc).isoformat(),
-        }
+        seat_key = _fsr_seat_index_key(seat)
         if dry_run:
-            print(f"[dry-run] seats/{doc_id} update {updates}", flush=True)
+            print(f"[dry-run] fsr seat_index={seat_key} doc={doc_id} raw={raw_int} (would read seat doc)", flush=True)
             return
         ref = db.collection("seats").document(doc_id)
         try:
+            snap = ref.get()
+        except Exception as e:
+            print(f"[bridge] fsr: read seats/{doc_id} failed: {e}", file=sys.stderr, flush=True)
+            return
+        if not snap.exists:
+            print(
+                f"[bridge] fsr: no Firestore document seats/{doc_id} — create it or fix seat_index_to_seat_id",
+                file=sys.stderr,
+                flush=True,
+            )
+            return
+        data = dict(snap.to_dict() or {})
+        if not data.get("occupied") or not data.get("studentId"):
+            return
+        logical_id = str(data.get("id") or doc_id)
+        prev = data.get("fsrPresence")
+        if prev not in ("present", "absent", None):
+            prev = None
+        updates: dict = {
+            "fsrRaw": raw_int,
+            "updatedAt": datetime.now(timezone.utc).isoformat(),
+        }
+        th = _fsr_presence_thresholds(cfg, seat_key)
+        if th:
+            on_t, off_t = th
+            updates["fsrPresence"] = _next_fsr_presence(raw_int, prev, on_t, off_t)
+        try:
             ref.update(updates)
         except Exception as e:
-            err = str(e).lower()
-            if "not found" in err or "no document" in err or "404" in err:
-                print(
-                    f"[bridge] fsr: no Firestore document seats/{doc_id} — create it or fix seat_index_to_seat_id",
-                    file=sys.stderr,
-                    flush=True,
-                )
-            else:
-                print(f"[bridge] fsr: seats/{doc_id} update failed: {e}", file=sys.stderr, flush=True)
+            print(f"[bridge] fsr: seats/{doc_id} update failed: {e}", file=sys.stderr, flush=True)
             return
-        print(f"[bridge] fsr seat={doc_id} raw={raw_int}", flush=True)
+        pr = updates.get("fsrPresence", "—")
+        print(f"[bridge] fsr seat={logical_id} raw={raw_int} presence={pr}", flush=True)
         return
 
     print(f"[bridge] unknown t={t!r} msg={msg!r}", file=sys.stderr, flush=True)

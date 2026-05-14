@@ -378,7 +378,8 @@ window.occupySeatByStudent = async function (seatId, studentId) {
 
   await updateDoc(doc(db, "seats", seatDocId), {
     occupied: true,
-    studentId
+    studentId,
+    fsrPresence: "present"
   });
 
   await addDoc(collection(db, "seat_transactions"), {
@@ -396,7 +397,8 @@ window.releaseSeatByStudent = async function (seatId, studentId) {
 
   await updateDoc(doc(db, "seats", seatDocId), {
     occupied: false,
-    studentId: null
+    studentId: null,
+    fsrPresence: null
   });
 
   await addDoc(collection(db, "seat_transactions"), {
@@ -417,7 +419,8 @@ window.returnToSeatByStudent = async function (seatId, studentId) {
 
   await updateDoc(doc(db, "seats", seatDocId), {
     occupied: true,
-    studentId
+    studentId,
+    fsrPresence: "present"
   });
 
   await addDoc(collection(db, "seat_transactions"), {
@@ -435,7 +438,8 @@ window.collectSeatByAdmin = async function (seatId, studentId) {
 
   await updateDoc(doc(db, "seats", seatDocId), {
     occupied: false,
-    studentId: null
+    studentId: null,
+    fsrPresence: null
   });
 
   await addDoc(collection(db, "seat_transactions"), {
