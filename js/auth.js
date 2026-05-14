@@ -60,23 +60,49 @@ function formatStudentIdInput(el) {
   }
 }
 
+function _loginScreenIsVisible() {
+  const el = document.getElementById("login-screen");
+  if (!el) return false;
+  if (el.style.display === "none") return false;
+  if (el.style.display === "flex") return true;
+  try {
+    return window.getComputedStyle(el).display !== "none";
+  } catch (_) {
+    return true;
+  }
+}
+
 async function studentSignIn() {
-  const email = document.getElementById("si-email").value.trim().toLowerCase(), pw = document.getElementById("si-pw").value;
+  const email = document.getElementById("si-email").value.trim().toLowerCase();
+  const pw = (document.getElementById("si-pw").value || "").trim();
   if (!email || !pw) return showErr("login-error", "Enter email and password.");
-  let u = (window.students || []).find(s => s.email.toLowerCase() === email && s.password === pw);
+  let u = (window.students || []).find((s) => s.email.toLowerCase() === email && s.password === pw);
   if (!u && window.findStudentByCredentials) {
     try {
       u = await window.findStudentByCredentials(email, pw);
-      if (u && window.students && !window.students.find(s => s.id === u.id)) window.students.push(u);
+      if (u && window.students && !window.students.find((s) => s.id === u.id)) window.students.push(u);
     } catch (err) {
       console.error("Sign-in query error:", err);
+      const msg = (err && err.message) || String(err);
+      if (/index|failed.?precondition|permission|network|offline|quota|429/i.test(msg)) {
+        return showErr(
+          "login-error",
+          "Sign-in could not reach the database. Check Wi‑Fi, try again, or ask staff to verify Firestore rules and the students index (email + password)."
+        );
+      }
+      return showErr("login-error", "Sign-in failed: " + (msg.length > 120 ? msg.slice(0, 120) + "…" : msg));
     }
   }
   if (!u) return showErr("login-error", "Invalid credentials.");
   if (u.status === "banned") return showErr("login-error", "Unfortunately, you are banned. Please check with the administration.");
   window._dueSoonNotifiedKey = null;
   currentUser = { ...u, role: "student", seatId: null, status: "no-seat", reservationId: null };
-  const s = seats.find(x => x.studentId === u.id); if (s) { currentUser.seatId = s.id; currentUser.status = s.occupied ? "seated" : "away"; }
+  const seatList = typeof seats !== "undefined" && Array.isArray(seats) ? seats : window.seats || [];
+  const s = seatList.find((x) => x.studentId === u.id);
+  if (s) {
+    currentUser.seatId = s.id;
+    currentUser.status = s.occupied ? "seated" : "away";
+  }
   enterDashboard();
 }
 
@@ -126,7 +152,8 @@ async function studentSignUp() {
 }
 
 function loginStaff() {
-  const email = document.getElementById("staff-email").value.trim().toLowerCase(), pw = document.getElementById("staff-pw").value;
+  const email = document.getElementById("staff-email").value.trim().toLowerCase();
+  const pw = (document.getElementById("staff-pw").value || "").trim();
   if (!email || !pw) return showErr("login-error-staff", "Enter email and password.");
   const m = STAFF_ACCOUNTS.find(a => a.email.toLowerCase() === email && a.password === pw);
   if (!m) return showErr("login-error-staff", "Invalid credentials.");
@@ -157,8 +184,10 @@ function logout() {
   if (window.location.hash) window.location.hash = "";
 }
 
-document.addEventListener("keydown", e => {
-  if (e.key !== "Enter" || document.getElementById("login-screen").style.display === "none") return;
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" || !_loginScreenIsVisible()) return;
+  const normal = document.getElementById("normal-login-flow");
+  if (normal && normal.style.display === "none") return;
   selectedRole === "staff" ? loginStaff() : authMode === "signin" ? studentSignIn() : studentSignUp();
 });
 
