@@ -15,10 +15,7 @@
     "2": "seat_2"
   },
   "fsr_presence": {
-    "defaults": {
-      "pressure_on_raw": 1200,
-      "pressure_off_raw": 900
-    },
+    "mode": "zero",
     "1": {},
     "2": {}
   },
@@ -48,5 +45,5 @@
     "fsr_start_away_timer": true
   },
   "firebase_credentials_path": "__SMARTLIB_HOME__/secrets/firestore-key.json",
-  "notes": "FSR: absent on occupied seat starts/keeps away_timers (level); present clears timers. First absent with no fsrPresence yet skipped. fsr_presence ADC thresholds; away_timer_seconds; serial_bridge.fsr_start_away_timer / release_seat_on_rfid_rescan. firebase_credentials_path __SMARTLIB_HOME__ expanded on Pi. Never commit secrets."
+  "notes": "fsr_presence.mode \"zero\": raw>0 clears away timer (I'm back); raw<=0 starts away timer (I'm leaving) for each occupied seat in seat_index_to_seat_id. Omit mode or use threshold keys pressure_on_raw/off for ADC hysteresis instead. timeouts_seconds.away_timer_seconds; serial_bridge.fsr_start_away_timer / release_seat_on_rfid_rescan. firebase_credentials_path __SMARTLIB_HOME__ expanded on Pi. Never commit secrets."
 }
