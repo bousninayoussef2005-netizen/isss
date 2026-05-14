@@ -22,17 +22,8 @@ function setKioskWaitStatus(msg) {
 }
 
 function onKioskRfidPayload(payload) {
-  if (typeof currentUser !== "undefined" && currentUser && currentUser.role === "student") {
-    const stillInKiosk = window._kioskDisplayMode === true;
-    const sessionActive = typeof window.isKioskBorrowSessionActive === "function" && window.isKioskBorrowSessionActive();
-    if (!stillInKiosk || sessionActive) {
-      return;
-    }
-  }
-  void beginKioskSessionForStudent(payload.studentId).catch((err) => {
-    console.error("[kiosk] beginKioskSessionForStudent:", err);
-    if (window.showToast) window.showToast("Kiosk sign-in failed. Try again.", "danger");
-  });
+  if (typeof currentUser !== "undefined" && currentUser && currentUser.role === "student") return;
+  void beginKioskSessionForStudent(payload.studentId);
 }
 
 window.enterKioskWaitScreen = function () {
