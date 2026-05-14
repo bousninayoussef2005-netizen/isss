@@ -34,6 +34,26 @@ except ImportError:
     raise SystemExit(1)
 
 
+def _field_filter_cls():
+    try:
+        from google.cloud.firestore_v1.base_query import FieldFilter
+
+        return FieldFilter
+    except ImportError:
+        return None
+
+
+def _where_eq(coll, field: str, value):
+    """Firestore query equality; prefers FieldFilter (google-cloud-firestore >= 2.14)."""
+    FF = _field_filter_cls()
+    if FF is not None:
+        try:
+            return coll.where(filter=FF(field, "==", value))
+        except Exception:
+            pass
+    return coll.where(field, "==", value)
+
+
 def load_config(path: Path) -> dict:
     raw = path.read_text(encoding="utf-8-sig")
     if not raw.strip():
@@ -137,7 +157,7 @@ def _fsr_start_away_timer_enabled(cfg: dict) -> bool:
 
 def _has_active_away_timer(db, seat_id: str, student_id: str) -> bool:
     now_ms = int(time.time() * 1000)
-    for t in db.collection("away_timers").where("seatId", "==", seat_id).stream():
+    for t in _where_eq(db.collection("away_timers"), "seatId", seat_id).stream():
         td = dict(t.to_dict() or {})
         if str(td.get("studentId") or "") != student_id:
             continue
@@ -169,7 +189,7 @@ def _clear_away_timers_for_fsr(db, seat_id: str, student_id: str) -> int:
     """Mirror Firebase.js clearAwayTimer (reason return). Returns number cleared."""
     now_ms = int(time.time() * 1000)
     n = 0
-    for t in db.collection("away_timers").where("seatId", "==", seat_id).stream():
+    for t in _where_eq(db.collection("away_timers"), "seatId", seat_id).stream():
         td = dict(t.to_dict() or {})
         if str(td.get("studentId") or "") != student_id:
             continue
@@ -207,7 +227,7 @@ def release_assigned_seats_for_student(db, student_id: str, *, dry_run: bool) ->
     now_ms = int(time.time() * 1000)
     released: list[str] = []
 
-    for snap in db.collection("seats").where("studentId", "==", student_id).stream():
+    for snap in _where_eq(db.collection("seats"), "studentId", student_id).stream():
         data = dict(snap.to_dict() or {})
         logical_id = str(data.get("id") or snap.id)
         snap.reference.update({"occupied": False, "studentId": None, "fsrPresence": None})
@@ -225,7 +245,7 @@ def release_assigned_seats_for_student(db, student_id: str, *, dry_run: bool) ->
         return released
 
     released_set = set(released)
-    for t in db.collection("away_timers").where("studentId", "==", student_id).stream():
+    for t in _where_eq(db.collection("away_timers"), "studentId", student_id).stream():
         td = dict(t.to_dict() or {})
         if str(td.get("seatId") or "") not in released_set:
             continue
@@ -233,7 +253,7 @@ def release_assigned_seats_for_student(db, student_id: str, *, dry_run: bool) ->
             continue
         t.reference.update({"active": False, "endedAt": now_ms, "reason": "rfid_leave"})
 
-    for r in db.collection("reservations").where("studentId", "==", student_id).stream():
+    for r in _where_eq(db.collection("reservations"), "studentId", student_id).stream():
         rd = dict(r.to_dict() or {})
         if not rd.get("active", False):
             continue
@@ -434,6 +454,12 @@ def main() -> int:
         if not firebase_admin._apps:
             firebase_admin.initialize_app(credentials.Certificate(str(p)))
         db = firestore.client()
+        print(
+            f"[bridge] config: release_seat_on_rfid_rescan={_release_seat_on_rfid_rescan(cfg)} "
+            f"fsr_zero_mode={_fsr_zero_mode(cfg)} fsr_start_away_timer={_fsr_start_away_timer_enabled(cfg)}",
+            file=sys.stderr,
+            flush=True,
+        )
 
     mode = "DRY-RUN" if args.dry_run else "LIVE"
     print(f"[bridge] {mode} serial {port} @ {baud}", file=sys.stderr, flush=True)
