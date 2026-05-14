@@ -125,10 +125,13 @@ Or enable the three **`.service`** units individually (see comments inside each 
 
 ```json
 "kiosk": { "max_active_borrows": 3, "borrow_due_days": 14 },
-"timeouts_seconds": { "barcode_then_rfid": 10 }
+"timeouts_seconds": { "barcode_then_rfid": 10 },
+"kiosk_worker": { "poll_seconds": 8, "batch": 5 }
 ```
 
 Defaults match **`Firebase.js`** (`MAX_ACTIVE_BORROWS = 3`, 14-day due). **`python-dateutil`** is recommended for ordering legacy **`timestamp`** strings on old **`transactions`** rows (`pip install python-dateutil`).
+
+**Firestore `429` / quota:** the worker polls Firestore every few seconds and each borrow/return loads **`transactions`**. If logs show **`429 Quota exceeded`**, increase **`kiosk_worker.poll_seconds`** (e.g. **8–15**), lower **`batch`**, and check **Firebase console → Usage** (free tier daily caps). The worker **backs off** (longer sleeps) after quota errors until a poll succeeds again.
 
 ---
 

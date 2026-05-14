@@ -44,6 +44,10 @@
     "release_seat_on_rfid_rescan": true,
     "fsr_start_away_timer": true
   },
+  "kiosk_worker": {
+    "poll_seconds": 8,
+    "batch": 5
+  },
   "firebase_credentials_path": "/home/pi/smartlib/secrets/firebase-adminsdk.json",
-  "notes": "Pi only — copy to ~/smartlib/pi-config.local.json; do not commit secrets. FSR mode zero: raw>0 clears away_timers; raw<=0 starts away timer (both seats via seat_index_to_seat_id). For ADC hysteresis instead, remove mode and add fsr_presence.defaults pressure_on_raw / pressure_off_raw."
+  "notes": "Pi only — copy to ~/smartlib/pi-config.local.json. kiosk_worker poll_seconds/batch lowers Firestore load (429). FSR mode zero; ADC mode uses pressure_on_raw/off. Never commit secrets."
 }

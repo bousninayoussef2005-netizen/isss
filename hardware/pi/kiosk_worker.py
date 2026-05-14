@@ -9,6 +9,7 @@ Events in `kiosk_auth_events` (pi_worker_state == "pending"):
 Optional pi-config.local.json:
   "kiosk": { "max_active_borrows": 3, "borrow_due_days": 14 }
   "timeouts_seconds": { "barcode_then_rfid": 10 }
+  "kiosk_worker": { "poll_seconds": 5, "batch": 5 }   # lower Firestore read rate; on 429 the worker backs off automatically
 
 Recommend: pip install python-dateutil  (better ordering of legacy transaction timestamps)
 See hardware/PHASE3.md.
@@ -63,6 +64,30 @@ def init_db(cfg: dict):
 def _kiosk_cfg(cfg: dict) -> dict:
     k = cfg.get("kiosk")
     return k if isinstance(k, dict) else {}
+
+
+def _kiosk_worker_runtime(cfg: dict, args) -> tuple[float, int]:
+    """poll_seconds and batch from pi-config kiosk_worker (optional), else CLI defaults."""
+    poll = max(2.0, float(getattr(args, "poll_seconds", 5.0) or 5.0))
+    batch = max(1, min(50, int(getattr(args, "batch", 10) or 10)))
+    kw = cfg.get("kiosk_worker")
+    if isinstance(kw, dict):
+        if kw.get("poll_seconds") is not None:
+            try:
+                poll = max(2.0, float(kw["poll_seconds"]))
+            except (TypeError, ValueError):
+                pass
+        if kw.get("batch") is not None:
+            try:
+                batch = max(1, min(50, int(kw["batch"])))
+            except (TypeError, ValueError):
+                pass
+    return poll, batch
+
+
+def _quota_exhausted(exc: BaseException) -> bool:
+    s = str(exc).lower()
+    return "429" in s or "quota" in s or "resource exhausted" in s or "rate limit" in s
 
 
 def _arm_timeout_sec(cfg: dict) -> float:
@@ -444,21 +469,22 @@ def main() -> int:
     ap.add_argument("--config", default=str(Path.home() / "smartlib" / "pi-config.local.json"))
     ap.add_argument("--dry-run", action="store_true", help="No Firestore writes (still reads)")
     ap.add_argument("--once", action="store_true", help="Process one batch and exit")
-    ap.add_argument("--poll-seconds", type=float, default=2.0)
-    ap.add_argument("--batch", type=int, default=10)
+    ap.add_argument("--poll-seconds", type=float, default=5.0, help="Seconds between polls (min 2); also set kiosk_worker.poll_seconds in pi-config")
+    ap.add_argument("--batch", type=int, default=10, help="Max pending events per poll; also kiosk_worker.batch in pi-config")
     args = ap.parse_args()
 
     cfg_path = Path(args.config).expanduser().resolve()
     cfg = load_config(cfg_path)
+    poll_sec, batch_limit = _kiosk_worker_runtime(cfg, args)
 
     from firebase_admin import firestore as firestore_mod
 
     db = init_db(cfg)
     mode = "DRY-RUN" if args.dry_run else "LIVE"
-    print(f"[worker] {mode}", flush=True)
+    print(f"[worker] {mode} poll={poll_sec}s batch={batch_limit}", flush=True)
 
     if args.once or args.dry_run:
-        n = process_batch(db, cfg=cfg, dry_run=args.dry_run, limit=args.batch, firestore_mod=firestore_mod)
+        n = process_batch(db, cfg=cfg, dry_run=args.dry_run, limit=batch_limit, firestore_mod=firestore_mod)
         print(f"[worker] processed {n} document(s)", flush=True)
         if n == 0:
             print(
@@ -469,13 +495,26 @@ def main() -> int:
             )
         return 0
 
-    print(f"[worker] loop every {args.poll_seconds}s (Ctrl+C to stop)", flush=True)
+    print(f"[worker] loop every {poll_sec}s (Ctrl+C to stop); on 429/quota backs off up to ~2m", flush=True)
+    quota_backoff = poll_sec
+    max_quota_backoff = 120.0
     while True:
+        sleep_for = poll_sec
         try:
-            process_batch(db, cfg=cfg, dry_run=False, limit=args.batch, firestore_mod=firestore_mod)
+            process_batch(db, cfg=cfg, dry_run=False, limit=batch_limit, firestore_mod=firestore_mod)
+            quota_backoff = poll_sec
         except Exception as e:
             print(f"[worker] error: {e}", file=sys.stderr, flush=True)
-        time.sleep(args.poll_seconds)
+            if _quota_exhausted(e):
+                sleep_for = min(max_quota_backoff, max(poll_sec, quota_backoff))
+                quota_backoff = min(max_quota_backoff, max(poll_sec, quota_backoff * 2.0))
+                print(
+                    f"[worker] quota/rate limit — sleeping {sleep_for:.0f}s before retry "
+                    f"(raise poll_seconds in pi-config kiosk_worker to reduce reads)",
+                    file=sys.stderr,
+                    flush=True,
+                )
+        time.sleep(sleep_for)
 
 
 if __name__ == "__main__":
