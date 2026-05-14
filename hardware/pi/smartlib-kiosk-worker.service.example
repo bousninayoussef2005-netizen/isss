@@ -7,6 +7,8 @@
 #   sudo systemctl enable --now smartlib-kiosk-worker.service
 #
 # Logs:  journalctl -u smartlib-kiosk-worker -f
+#
+# Prereq: kiosk_worker.py in ~/smartlib/bin/ (wget from GitHub main). venv has firebase-admin (+ python-dateutil recommended).
 
 [Unit]
 Description=SmartLib kiosk worker (Firestore borrow/return queue)
@@ -20,7 +22,7 @@ Group=pi
 WorkingDirectory=/home/pi/smartlib
 Environment=HOME=/home/pi
 ExecStart=/home/pi/smartlib/venv/bin/python /home/pi/smartlib/bin/kiosk_worker.py --config /home/pi/smartlib/pi-config.local.json
-Restart=on-failure
+Restart=always
 RestartSec=5
 
 [Install]
