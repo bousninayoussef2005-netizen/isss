@@ -69,58 +69,6 @@ function renderBorrowSummary(activeBorrows) {
   }).join("");
 }
 
-window.isKioskBorrowSessionActive = function () {
-  return (
-    typeof currentUser !== "undefined" &&
-    currentUser &&
-    currentUser.role === "student" &&
-    Number.isFinite(window._kioskSessionEndAt) &&
-    Date.now() < window._kioskSessionEndAt
-  );
-};
-
-/**
- * RFID kiosk: while session timer runs, Enter in catalog search with a full barcode borrows (HID scanners send Enter).
- */
-window.onCatalogSearchKeydown = function (e) {
-  if (e.key !== "Enter") return;
-  if (!window.isKioskBorrowSessionActive()) return;
-  const el = document.getElementById("catalog-search");
-  const v = (el && el.value ? el.value : "").trim();
-  if (!v) return;
-  e.preventDefault();
-  void window.tryBorrowFromScannedBarcode(v);
-};
-
-window.tryBorrowFromScannedBarcode = async function (raw) {
-  if (!window.isKioskBorrowSessionActive()) return false;
-  const code = String(raw || "").trim();
-  if (!code) return false;
-  const list = window.books || (typeof books !== "undefined" ? books : []) || [];
-  const bc = code.toLowerCase();
-  const book = list.find((b) => String(b.barcode || "").trim().toLowerCase() === bc);
-  if (!book) {
-    if (window.showToast) window.showToast("No book matches that barcode.", "warning");
-    return false;
-  }
-  if (!currentUser?.id) return false;
-  if (!window.studentBorrowBook) {
-    if (window.showToast) window.showToast("Borrow service unavailable", "danger");
-    return false;
-  }
-  try {
-    await window.studentBorrowBook(currentUser.id, book.id);
-    if (window.showToast) window.showToast(`Borrowed: ${book.title}`, "success");
-    const inp = document.getElementById("catalog-search");
-    if (inp) inp.value = "";
-    renderCatalog();
-    return true;
-  } catch (err) {
-    if (window.showToast) window.showToast(err.message || "Borrow failed", "danger");
-    return false;
-  }
-};
-
 function updateCatalogUserStatus() {
   const el = document.getElementById("catalog-user-status");
   if (!el) return;
@@ -132,12 +80,9 @@ function updateCatalogUserStatus() {
   const n = active.length;
   const left = Math.max(0, MAX_STUDENT_BORROWS - n);
   const atLimit = n >= MAX_STUDENT_BORROWS;
-  const kioskLine = window.isKioskBorrowSessionActive()
-      ? `<p style="margin:8px 0 0;font-size:0.95rem;color:var(--text-muted)">Kiosk borrow: point the scanner at the search box — barcode + Enter borrows immediately.</p>`
-      : "";
   el.innerHTML = atLimit
-    ? `<strong>Your borrowing status:</strong> ${n} / ${MAX_STUDENT_BORROWS} books out — you are at the limit. Return a book to borrow another.${kioskLine}`
-    : `<strong>Your borrowing status:</strong> ${n} / ${MAX_STUDENT_BORROWS} books out — ${left} slot${left !== 1 ? "s" : ""} left.${kioskLine}`;
+    ? `<strong>Your borrowing status:</strong> ${n} / ${MAX_STUDENT_BORROWS} books out — you are at the limit. Return a book to borrow another.`
+    : `<strong>Your borrowing status:</strong> ${n} / ${MAX_STUDENT_BORROWS} books out — ${left} slot${left !== 1 ? "s" : ""} left.`;
 }
 
 function renderCatalog() {

@@ -76,9 +76,6 @@ window.clearKioskSessionTimers = function () {
     clearInterval(_kioskCountdownInterval);
     _kioskCountdownInterval = null;
   }
-  try {
-    window._kioskSessionEndAt = null;
-  } catch (_) {}
   const banner = document.getElementById("kiosk-session-banner");
   if (banner) {
     banner.style.display = "none";
@@ -102,7 +99,7 @@ function startKioskSessionCountdown() {
     if (banner) {
       banner.textContent =
         left > 0
-          ? `Kiosk session · scan a book barcode in Catalog (search box), then Enter · ${left}s until sign-out`
+          ? `Kiosk session · pick your seat · ${left}s until sign-out`
           : "Signing out…";
     }
     if (left <= 0) {
@@ -137,18 +134,9 @@ async function beginKioskSessionForStudent(studentId) {
     currentUser.status = s.occupied ? "seated" : "away";
   }
   enterDashboard();
-  if (typeof switchTab === "function") switchTab("u-catalog", "Catalog");
+  if (typeof switchTab === "function") switchTab("u-seat", "My Seat");
   startKioskSessionCountdown();
-  if (window.showToast) {
-    window.showToast(`Hello, ${u.name || u.id} — scan a book barcode in the catalog search box (scanner sends Enter).`, "success", 5000);
-  }
-  setTimeout(() => {
-    const inp = document.getElementById("catalog-search");
-    if (inp) {
-      inp.focus();
-      inp.select();
-    }
-  }, 350);
+  if (window.showToast) window.showToast(`Hello, ${u.name || u.id} — choose a seat.`, "success", 4000);
 }
 
 function tryAutoKioskFromUrl() {
