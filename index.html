@@ -18,7 +18,11 @@
 <div id="login-screen" class="login-screen">
   <div class="login-container">
     <div class="login-brand"><div class="login-logo">📚</div><h1>SmartLib</h1><p>IoT Library Management System</p></div>
-    <p class="kiosk-entry-row" id="kiosk-entry-row"><button type="button" class="link-button" onclick="enterKioskWaitScreen()">Library kiosk (RFID)</button></p>
+    <p class="kiosk-entry-row" id="kiosk-entry-row">
+      <button type="button" class="link-button" onclick="enterKioskCheckoutScreen()">Library kiosk — borrow / return</button>
+      <span class="kiosk-entry-sep"> · </span>
+      <button type="button" class="link-button" onclick="enterKioskSeatScreen()">Pick a seat (card only)</button>
+    </p>
     <div id="normal-login-flow">
     <div class="role-toggle">
       <button class="role-btn active" id="role-student-btn" onclick="switchRole('student')">🎓 Student</button>
@@ -65,7 +69,18 @@
     </div>
     <div id="kiosk-wait-panel" class="login-card kiosk-wait-panel" style="display:none">
       <h2 class="kiosk-wait-title">Library kiosk</h2>
-      <p class="kiosk-wait-msg">Scan your card on the RFID reader. You will be signed in briefly to pick a seat.</p>
+      <div id="kiosk-checkout-block">
+        <p class="kiosk-wait-msg">Scan the <strong>book barcode</strong>, then your <strong>student card</strong>. Same flow to return a book you already have out.</p>
+        <div class="kiosk-steps">
+          <span id="kiosk-step-barcode" class="kiosk-step kiosk-step-active">1 · Book</span>
+          <span id="kiosk-step-card" class="kiosk-step">2 · Card</span>
+        </div>
+        <div class="form-group" style="margin-top:14px">
+          <label for="kiosk-barcode-input">Book barcode</label>
+          <input type="text" id="kiosk-barcode-input" class="search-bar" placeholder="Scan barcode here…" autocomplete="off" onkeydown="window.onKioskBarcodeKeydown && window.onKioskBarcodeKeydown(event)">
+        </div>
+      </div>
+      <p id="kiosk-seat-hint" class="kiosk-wait-msg" style="display:none">Scan your card to sign in briefly and pick a seat on the map.</p>
       <p id="kiosk-wait-status" class="kiosk-wait-status" aria-live="polite"></p>
       <button type="button" class="login-btn login-btn-secondary" onclick="exitKioskToNormalLogin()">Use email / staff sign-in instead</button>
     </div>
