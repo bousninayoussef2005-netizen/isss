@@ -6,7 +6,8 @@
 #   # log out and back in
 #   python3 ~/smartlib/bin/barcode_hid_to_kiosk.py --list
 #   # set barcode_hid.device in pi-config.local.json if auto-detect is wrong
-#   sudo cp smartlib-barcode-hid.service.example /etc/systemd/system/smartlib-barcode-hid.service
+#   sudo cp ~/smartlib/systemd/smartlib-barcode-hid.service.example /etc/systemd/system/smartlib-barcode-hid.service
+#   # (after refresh_pi_bin.sh — Pi has ~/smartlib/bin only, not a full git clone)
 #   sudo systemctl daemon-reload
 #   sudo systemctl enable --now smartlib-barcode-hid.service
 #

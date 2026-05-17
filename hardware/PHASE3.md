@@ -101,19 +101,32 @@ Each pending doc is handled: **`rfid_scan`** arms the worker in memory; **`barco
 
 ## Step 3 — Run on boot (**systemd**)
 
-Copy unit files from **`hardware/pi/`** (adjust **`User=`** and **`/home/pi`** if needed), then:
+Copy unit files (adjust **`User=`** and **`/home/pi`** if needed).
+
+**If you cloned the repo on the Pi:**
 
 ```bash
 cd /path/to/isss/hardware/pi
 sudo cp smartlib-serial-bridge.service.example /etc/systemd/system/smartlib-serial-bridge.service
 sudo cp smartlib-kiosk-worker.service.example /etc/systemd/system/smartlib-kiosk-worker.service
-sudo cp smartlib-barcode-serial.service.example /etc/systemd/system/smartlib-barcode-serial.service
+sudo cp smartlib-barcode-hid.service.example /etc/systemd/system/smartlib-barcode-hid.service
+# serial scanner only (optional): smartlib-barcode-serial.service.example
 sudo cp smartlib-edge.target.example /etc/systemd/system/smartlib-edge.target
 sudo systemctl daemon-reload
 sudo systemctl enable --now smartlib-edge.target
 ```
 
-Or enable the three **`.service`** units individually (see comments inside each file). **Stop** any manual **`python ...`** copies first so serial ports are free.
+**If you only have `~/smartlib/bin`** (typical lab Pi): run **`refresh_pi_bin.sh`** — it also downloads unit examples to **`~/smartlib/systemd/`**, then:
+
+```bash
+sudo cp ~/smartlib/systemd/smartlib-barcode-hid.service.example /etc/systemd/system/smartlib-barcode-hid.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now smartlib-barcode-hid.service
+```
+
+**iPad checkout (book on Pi HID, card on Pi/iPad):** enable **`smartlib-serial-bridge`** + **`smartlib-barcode-hid`**; **do not** enable **`smartlib-kiosk-worker`**.
+
+Or enable **`.service`** units individually (see comments inside each file). **Stop** any manual **`python ...`** copies first so serial ports are free.
 
 **Logs:** see **`hardware/pi/MONITORING.md`**.
 
@@ -152,6 +165,7 @@ Defaults match **`Firebase.js`** (`MAX_ACTIVE_BORROWS = 3`, 14-day due). **`pyth
 | `hardware/pi/serial_bridge.py` | **`rfid`** / **`barcode`** / **`fsr`** → Firestore (ESP32 serial). |
 | `hardware/pi/barcode_hid_to_kiosk.py` | Pi: **USB HID** or **USB-serial** scanner → **`kiosk_auth_events`** (`barcode_scan`). |
 | `hardware/pi/smartlib-kiosk-worker.service.example` | **systemd** — **`kiosk_worker.py`**. |
+| `hardware/pi/smartlib-barcode-hid.service.example` | **systemd** — **`barcode_hid_to_kiosk.py --mode hid`** (USB keyboard scanner). |
 | `hardware/pi/smartlib-barcode-serial.service.example` | **systemd** — **`barcode_hid_to_kiosk.py --mode serial`**. |
 | `hardware/pi/smartlib-edge.target.example` | **systemd** — start bridge + worker + barcode together. |
 | `hardware/pi/MONITORING.md` | **`journalctl`** / health checks. |
