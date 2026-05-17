@@ -10,6 +10,9 @@
     "port_linux": "/dev/ttyUSB1",
     "baud": 9600
   },
+  "barcode_hid": {
+    "device": "/dev/input/event2"
+  },
   "seat_index_to_seat_id": {
     "1": "seat_1",
     "2": "seat_2"

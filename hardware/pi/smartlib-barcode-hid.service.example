@@ -1,0 +1,34 @@
+# SmartLib — USB HID (keyboard) barcode scanner on Pi → Firestore kiosk_auth_events
+#
+# Install:
+#   sudo apt install python3-evdev
+#   sudo usermod -aG input pi
+#   # log out and back in
+#   python3 ~/smartlib/bin/barcode_hid_to_kiosk.py --list
+#   # set barcode_hid.device in pi-config.local.json if auto-detect is wrong
+#   sudo cp smartlib-barcode-hid.service.example /etc/systemd/system/smartlib-barcode-hid.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now smartlib-barcode-hid.service
+#
+# Logs:  journalctl -u smartlib-barcode-hid -f
+#
+# Do NOT run kiosk_worker at the same time for checkout — iPad handles borrow/return.
+
+[Unit]
+Description=SmartLib HID barcode scanner to Firestore (kiosk_auth_events)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+SupplementaryGroups=input
+WorkingDirectory=/home/pi/smartlib
+Environment=HOME=/home/pi
+ExecStart=/home/pi/smartlib/venv/bin/python /home/pi/smartlib/bin/barcode_hid_to_kiosk.py --config /home/pi/smartlib/pi-config.local.json --mode hid
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

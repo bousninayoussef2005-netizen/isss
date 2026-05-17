@@ -40,6 +40,24 @@ function setKioskCheckoutStep(step) {
   if (s2) s2.classList.toggle("kiosk-step-active", step === 2);
 }
 
+function applyKioskPendingBarcode(code) {
+  const book = findBookByBarcode(code);
+  if (!book) {
+    setKioskWaitStatus("Unknown barcode — check the catalog or try again.");
+    if (window.showToast) window.showToast("No book matches that barcode.", "warning");
+    return false;
+  }
+  _kioskPendingBarcode = code;
+  const inp = document.getElementById("kiosk-barcode-input");
+  if (inp) {
+    inp.value = code;
+    inp.disabled = true;
+  }
+  setKioskCheckoutStep(2);
+  setKioskWaitStatus(`Step 2: Scan your student card — ${book.title}`);
+  return true;
+}
+
 function resetKioskCheckoutUi() {
   _kioskPendingBarcode = null;
   const inp = document.getElementById("kiosk-barcode-input");
@@ -48,8 +66,13 @@ function resetKioskCheckoutUi() {
     inp.disabled = false;
   }
   setKioskCheckoutStep(1);
-  setKioskWaitStatus("Step 1: Scan the book barcode (scanner sends Enter).");
-  window.setTimeout(() => document.getElementById("kiosk-barcode-input")?.focus(), 200);
+  setKioskWaitStatus("Step 1: Scan the book on the Pi barcode scanner (then scan your card).");
+}
+
+function onKioskCheckoutBarcode(payload) {
+  if (window._kioskMode !== "checkout") return;
+  if (_kioskPendingBarcode) return;
+  applyKioskPendingBarcode(payload.barcode);
 }
 
 function findBookByBarcode(raw) {
@@ -132,20 +155,12 @@ function onKioskSeatRfid(payload) {
 
 window.onKioskBarcodeKeydown = function (e) {
   if (e.key !== "Enter" || window._kioskMode !== "checkout") return;
+  if (_kioskPendingBarcode) return;
   const el = document.getElementById("kiosk-barcode-input");
   const v = (el && el.value ? el.value : "").trim();
   if (!v) return;
   e.preventDefault();
-  const book = findBookByBarcode(v);
-  if (!book) {
-    setKioskWaitStatus("Unknown barcode — check the catalog or try again.");
-    if (window.showToast) window.showToast("No book matches that barcode.", "warning");
-    return;
-  }
-  _kioskPendingBarcode = v;
-  if (el) el.disabled = true;
-  setKioskCheckoutStep(2);
-  setKioskWaitStatus(`Step 2: Scan your student card — ${book.title}`);
+  applyKioskPendingBarcode(v);
 };
 
 function attachKioskRfidListener(handler) {
@@ -153,6 +168,27 @@ function attachKioskRfidListener(handler) {
   const attach = () => {
     if (window.startKioskRfidListener) {
       window.startKioskRfidListener(handler);
+      return true;
+    }
+    return false;
+  };
+  if (!attach()) {
+    setKioskWaitStatus("Loading…");
+    let n = 0;
+    const w = setInterval(() => {
+      if (attach() || ++n > 150) clearInterval(w);
+    }, 100);
+  }
+}
+
+function attachKioskCheckoutListeners() {
+  if (window._startFirebaseListeners) window._startFirebaseListeners();
+  const attach = () => {
+    if (window.startKioskEventsListener) {
+      window.startKioskEventsListener({
+        onRfidScan: onKioskCheckoutRfid,
+        onBarcodeScan: onKioskCheckoutBarcode,
+      });
       return true;
     }
     return false;
@@ -192,7 +228,7 @@ window.enterKioskCheckoutScreen = function () {
   setKioskWaitTitle("Borrow or return a book");
   setKioskPanelVisible("wait");
   resetKioskCheckoutUi();
-  attachKioskRfidListener(onKioskCheckoutRfid);
+  attachKioskCheckoutListeners();
 };
 
 /** Enter the library: RFID → short session → pick a seat. */
@@ -321,7 +357,7 @@ function tryAutoKioskFromUrl() {
   }
   if (sp.get("kiosk") !== "1" && sp.get("kiosk") !== "true") return;
   const go = () => {
-    if (window.startKioskRfidListener) {
+    if (window.startKioskEventsListener || window.startKioskRfidListener) {
       enterKioskChoiceScreen({ hideEmailLogin: true });
       return;
     }

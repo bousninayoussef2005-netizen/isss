@@ -165,10 +165,10 @@ window.stopKioskRfidListener = function () {
 };
 
 /**
- * Listen for new kiosk_auth_events (rfid_scan). Requires Firestore rules to allow client read
- * on kiosk_auth_events (see hardware/pi/FIRESTORE-LAB.md).
+ * Listen for new kiosk_auth_events (rfid_scan, barcode_scan from Pi). Requires Firestore rules
+ * to allow client read on kiosk_auth_events (see hardware/pi/FIRESTORE-LAB.md).
  */
-window.startKioskRfidListener = function (onRfidScan) {
+window.startKioskEventsListener = function ({ onRfidScan, onBarcodeScan } = {}) {
   window.stopKioskRfidListener();
   resetKioskRfidListenerState();
   const q = query(collection(db, "kiosk_auth_events"), orderBy("timestamp", "desc"), limit(25));
@@ -184,12 +184,27 @@ window.startKioskRfidListener = function (onRfidScan) {
         const docId = ch.doc.id;
         if (_kioskSeenEventDocIds.has(docId)) return;
         const d = ch.doc.data() || {};
-        if (d.action !== "rfid_scan" || !d.student_id) return;
         _kioskSeenEventDocIds.add(docId);
         if (_kioskSeenEventDocIds.size > 400) {
           _kioskSeenEventDocIds.clear();
         }
-        onRfidScan({ studentId: String(d.student_id).trim(), uid: d.uid || "", docId, raw: d });
+        if (d.action === "rfid_scan" && d.student_id && onRfidScan) {
+          onRfidScan({
+            studentId: String(d.student_id).trim(),
+            uid: d.uid || "",
+            docId,
+            raw: d,
+          });
+          return;
+        }
+        if (d.action === "barcode_scan" && d.barcode && onBarcodeScan) {
+          onBarcodeScan({
+            barcode: String(d.barcode).trim(),
+            intent: d.intent || "borrow",
+            docId,
+            raw: d,
+          });
+        }
       });
     },
     (err) => {
@@ -203,6 +218,11 @@ window.startKioskRfidListener = function (onRfidScan) {
       }
     }
   );
+};
+
+/** RFID-only listener (seat kiosk). */
+window.startKioskRfidListener = function (onRfidScan) {
+  window.startKioskEventsListener({ onRfidScan });
 };
 
 window.fetchStudentById = async function (studentId) {

@@ -232,23 +232,39 @@ def run_serial(cfg: dict, db, *, dry_run: bool, intent_default: str) -> int:
             push_barcode(db, line, intent_default, dry_run=dry_run)
 
 
-def pick_default_hid_device() -> str | None:
+def hid_device_from_cfg(cfg: dict) -> str | None:
+    bh = cfg.get("barcode_hid")
+    if isinstance(bh, dict):
+        dev = bh.get("device") or bh.get("device_linux")
+        if dev and isinstance(dev, str) and dev.strip():
+            return dev.strip()
+    return None
+
+
+def pick_default_hid_device(cfg: dict | None = None) -> str | None:
+    if cfg:
+        forced = hid_device_from_cfg(cfg)
+        if forced and Path(forced).exists():
+            return forced
     try:
         import evdev
     except ImportError:
         return None
     best = None
     best_score = -1
+    skip_name = ("gpio", "raspberry", "pwr", "pcie", "mouse", "touchpad")
     for p in Path("/dev/input").glob("event*"):
         try:
             d = evdev.InputDevice(str(p))
             name = (d.name or "").lower()
+            if any(s in name for s in skip_name):
+                continue
             score = 0
             for kw in ("barcode", "scanner", "symbol", "zebra", "honeywell", "datalogic", "handheld"):
                 if kw in name:
-                    score += 2
+                    score += 3
             if "keyboard" in name:
-                score += 0
+                score += 1
             if score > best_score:
                 best_score = score
                 best = str(p)
@@ -297,8 +313,8 @@ def main() -> int:
 
     devpath = args.device.strip()
     if not devpath:
-        devpath = pick_default_hid_device() or "/dev/input/event0"
-        print(f"[barcode-hid] using device {devpath!r} (override with --device)", flush=True)
+        devpath = pick_default_hid_device(cfg) or "/dev/input/event0"
+        print(f"[barcode-hid] using HID device {devpath!r} (set barcode_hid.device in pi-config or --device)", flush=True)
 
     return run_hid(devpath, cfg, db, dry_run=args.dry_run, intent_default=args.intent)
 
