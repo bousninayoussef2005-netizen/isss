@@ -1,7 +1,8 @@
 # SmartLib — USB HID (keyboard) barcode scanner on Pi → Firestore kiosk_auth_events
 #
 # Install:
-#   sudo apt install python3-evdev
+#   sudo apt install python3-evdev python3-dev
+#   ~/smartlib/venv/bin/pip install evdev   # apt alone does NOT install into the venv
 #   sudo usermod -aG input pi
 #   # log out and back in
 #   python3 ~/smartlib/bin/barcode_hid_to_kiosk.py --list

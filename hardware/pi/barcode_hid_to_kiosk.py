@@ -34,6 +34,32 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
+def evdev_install_hint() -> str:
+    venv_py = Path(sys.executable)
+    if "smartlib" in str(venv_py) and "venv" in str(venv_py):
+        pip = venv_py.parent / "pip"
+        return (
+            "evdev not found in the SmartLib venv.\n"
+            f"  {pip} install evdev\n"
+            "If that fails:  sudo apt install python3-dev\n"
+            "  then retry pip install, or:  sudo apt install python3-evdev\n"
+            "  and recreate the venv with:  python3 -m venv --system-site-packages ~/smartlib/venv"
+        )
+    return (
+        "evdev not found. Install for this Python:\n"
+        "  pip install evdev\n"
+        "  or:  sudo apt install python3-evdev python3-dev"
+    )
+
+
+def require_evdev() -> None:
+    try:
+        import evdev  # noqa: F401
+    except ImportError:
+        print(evdev_install_hint(), file=sys.stderr)
+        raise SystemExit(2)
+
+
 def load_config(path: Path) -> dict:
     raw = path.read_text(encoding="utf-8-sig")
     if not raw.strip():
@@ -109,7 +135,7 @@ def list_input_devices() -> int:
     try:
         import evdev
     except ImportError:
-        print("Install: sudo apt install python3-evdev", file=sys.stderr)
+        print(evdev_install_hint(), file=sys.stderr)
         return 2
     for p in sorted(Path("/dev/input").glob("event*")):
         try:
@@ -121,12 +147,9 @@ def list_input_devices() -> int:
 
 
 def run_hid(device_path: str, cfg: dict, db, *, dry_run: bool, intent_default: str) -> int:
-    try:
-        import evdev
-        from evdev import ecodes
-    except ImportError:
-        print("Install: sudo apt install python3-evdev", file=sys.stderr)
-        return 2
+    require_evdev()
+    import evdev
+    from evdev import ecodes
 
     digit_map, _ = _digit_map()
     if digit_map is None:
@@ -290,6 +313,8 @@ def main() -> int:
         return list_input_devices()
     if args.list_serial:
         return list_serial_ports()
+    if args.mode == "hid":
+        require_evdev()
 
     cfg = load_config(Path(args.config).expanduser().resolve())
 

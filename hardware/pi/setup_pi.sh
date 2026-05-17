@@ -39,7 +39,7 @@ fi
 # shellcheck source=/dev/null
 source "${VENV}/bin/activate"
 pip install --upgrade pip
-pip install firebase-admin pyserial
+pip install firebase-admin pyserial evdev
 
 echo ""
 if [[ ! -f "${KEY_PATH}" ]]; then
