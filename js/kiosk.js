@@ -10,13 +10,22 @@ window._kioskMode = null; // "checkout" | "seat"
 let _kioskCountdownInterval = null;
 let _kioskPendingBarcode = null;
 
-function setKioskLoginLayout(waiting) {
-  const normal = document.getElementById("normal-login-flow");
+function setKioskPanelVisible(which) {
+  const choice = document.getElementById("kiosk-choice-panel");
   const wait = document.getElementById("kiosk-wait-panel");
-  const entry = document.getElementById("kiosk-entry-row");
-  if (normal) normal.style.display = waiting ? "none" : "block";
-  if (wait) wait.style.display = waiting ? "block" : "none";
-  if (entry) entry.style.display = waiting ? "none" : "block";
+  const normal = document.getElementById("normal-login-flow");
+  if (choice) choice.style.display = which === "choice" ? "block" : "none";
+  if (wait) wait.style.display = which === "wait" ? "block" : "none";
+  if (normal) {
+    if (which === "choice" && window._kioskHideEmailLogin) normal.style.display = "none";
+    else if (which === "choice") normal.style.display = "block";
+    else normal.style.display = "none";
+  }
+}
+
+function setKioskWaitTitle(text) {
+  const el = document.getElementById("kiosk-wait-title");
+  if (el) el.textContent = text || "Library kiosk";
 }
 
 function setKioskWaitStatus(msg) {
@@ -157,7 +166,22 @@ function attachKioskRfidListener(handler) {
   }
 }
 
-/** Default kiosk: borrow / return (barcode then RFID). */
+/** Home screen: Enter the library vs borrow/return. */
+window.enterKioskChoiceScreen = function (opts) {
+  window._kioskDisplayMode = true;
+  window._kioskMode = null;
+  window._kioskHideEmailLogin = !!(opts && opts.hideEmailLogin);
+  _kioskPendingBarcode = null;
+  if (window.stopKioskRfidListener) window.stopKioskRfidListener();
+  setKioskPanelVisible("choice");
+};
+
+window.backToKioskChoice = function () {
+  if (window.stopKioskRfidListener) window.stopKioskRfidListener();
+  enterKioskChoiceScreen({ hideEmailLogin: window._kioskHideEmailLogin });
+};
+
+/** Borrow / return: barcode then RFID. */
 window.enterKioskCheckoutScreen = function () {
   window._kioskDisplayMode = true;
   window._kioskMode = "checkout";
@@ -165,12 +189,13 @@ window.enterKioskCheckoutScreen = function () {
   const checkoutBlock = document.getElementById("kiosk-checkout-block");
   if (seatBlock) seatBlock.style.display = "none";
   if (checkoutBlock) checkoutBlock.style.display = "block";
-  setKioskLoginLayout(true);
+  setKioskWaitTitle("Borrow or return a book");
+  setKioskPanelVisible("wait");
   resetKioskCheckoutUi();
   attachKioskRfidListener(onKioskCheckoutRfid);
 };
 
-/** Short session to pick a seat (RFID only). */
+/** Enter the library: RFID → short session → pick a seat. */
 window.enterKioskSeatScreen = function () {
   window._kioskDisplayMode = true;
   window._kioskMode = "seat";
@@ -179,19 +204,26 @@ window.enterKioskSeatScreen = function () {
   const checkoutBlock = document.getElementById("kiosk-checkout-block");
   if (seatBlock) seatBlock.style.display = "block";
   if (checkoutBlock) checkoutBlock.style.display = "none";
-  setKioskLoginLayout(true);
-  setKioskWaitStatus("Listening for card scan…");
+  setKioskWaitTitle("Enter the library");
+  setKioskPanelVisible("wait");
+  setKioskWaitStatus("Scan your student card on the RFID reader…");
   attachKioskRfidListener(onKioskSeatRfid);
 };
 
-window.enterKioskWaitScreen = window.enterKioskCheckoutScreen;
+window.enterKioskWaitScreen = window.enterKioskChoiceScreen;
 
 window.exitKioskToNormalLogin = function () {
   window._kioskDisplayMode = false;
   window._kioskMode = null;
+  window._kioskHideEmailLogin = false;
   _kioskPendingBarcode = null;
   if (window.stopKioskRfidListener) window.stopKioskRfidListener();
-  setKioskLoginLayout(false);
+  const choice = document.getElementById("kiosk-choice-panel");
+  const wait = document.getElementById("kiosk-wait-panel");
+  const normal = document.getElementById("normal-login-flow");
+  if (choice) choice.style.display = "block";
+  if (wait) wait.style.display = "none";
+  if (normal) normal.style.display = "block";
   setKioskWaitStatus("");
   try {
     const u = new URL(window.location.href);
@@ -205,9 +237,8 @@ window.exitKioskToNormalLogin = function () {
 window.showKioskWaitAfterSessionEnd = function () {
   document.getElementById("app-shell").style.display = "none";
   document.getElementById("login-screen").style.display = "flex";
-  window._kioskDisplayMode = true;
   if (window.stopKioskRfidListener) window.stopKioskRfidListener();
-  enterKioskSeatScreen();
+  enterKioskChoiceScreen({ hideEmailLogin: true });
 };
 
 window.clearKioskSessionTimers = function () {
@@ -291,7 +322,7 @@ function tryAutoKioskFromUrl() {
   if (sp.get("kiosk") !== "1" && sp.get("kiosk") !== "true") return;
   const go = () => {
     if (window.startKioskRfidListener) {
-      enterKioskCheckoutScreen();
+      enterKioskChoiceScreen({ hideEmailLogin: true });
       return;
     }
     setTimeout(go, 80);

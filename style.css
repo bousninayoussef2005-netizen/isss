@@ -46,7 +46,17 @@ body{font-family:'Poppins',sans-serif;background:var(--bg-soft);color:var(--text
 .login-btn-secondary:hover{box-shadow:none;background:var(--bg);}
 .link-button{background:none;border:none;color:var(--accent);font:inherit;font-weight:600;cursor:pointer;text-decoration:underline;padding:0;}
 .link-button:hover{color:var(--accent-hover);}
-.kiosk-entry-row{text-align:center;margin:0 0 14px;}
+.kiosk-choice-panel{margin-bottom:16px;padding:20px 22px;}
+.kiosk-choice-heading{margin:0 0 14px;font-size:1.2rem;text-align:center;}
+.kiosk-choice-btn{display:flex;align-items:flex-start;gap:14px;width:100%;margin:0 0 12px;padding:16px 18px;text-align:left;border:2px solid var(--border);border-radius:12px;background:var(--card);cursor:pointer;font:inherit;color:var(--text);transition:border-color .15s,box-shadow .15s;}
+.kiosk-choice-btn:last-of-type{margin-bottom:0;}
+.kiosk-choice-btn:hover{border-color:var(--accent);box-shadow:0 4px 14px rgba(29,191,115,0.12);}
+.kiosk-choice-btn-alt:hover{border-color:var(--accent2);box-shadow:0 4px 14px rgba(59,130,246,0.12);}
+.kiosk-choice-icon{font-size:1.75rem;line-height:1;flex-shrink:0;}
+.kiosk-choice-text{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.kiosk-choice-label{font-size:1.05rem;font-weight:700;}
+.kiosk-choice-desc{font-size:0.9rem;color:var(--text-muted);line-height:1.35;}
+.kiosk-wait-email-link{display:block;width:100%;text-align:center;margin-top:10px;font-size:14px;}
 .kiosk-wait-panel{text-align:left;}
 .kiosk-wait-title{margin:0 0 8px;font-size:1.25rem;}
 .kiosk-wait-msg{margin:0 0 10px;color:var(--text-muted);}

@@ -18,11 +18,23 @@
 <div id="login-screen" class="login-screen">
   <div class="login-container">
     <div class="login-brand"><div class="login-logo">📚</div><h1>SmartLib</h1><p>IoT Library Management System</p></div>
-    <p class="kiosk-entry-row" id="kiosk-entry-row">
-      <button type="button" class="link-button" onclick="enterKioskCheckoutScreen()">Library kiosk — borrow / return</button>
-      <span class="kiosk-entry-sep"> · </span>
-      <button type="button" class="link-button" onclick="enterKioskSeatScreen()">Pick a seat (card only)</button>
-    </p>
+    <div id="kiosk-choice-panel" class="login-card kiosk-choice-panel">
+      <h2 class="kiosk-choice-heading">What would you like to do?</h2>
+      <button type="button" class="kiosk-choice-btn" onclick="enterKioskSeatScreen()">
+        <span class="kiosk-choice-icon" aria-hidden="true">🚪</span>
+        <span class="kiosk-choice-text">
+          <span class="kiosk-choice-label">Enter the library</span>
+          <span class="kiosk-choice-desc">Scan your student card · choose a seat on the map</span>
+        </span>
+      </button>
+      <button type="button" class="kiosk-choice-btn kiosk-choice-btn-alt" onclick="enterKioskCheckoutScreen()">
+        <span class="kiosk-choice-icon" aria-hidden="true">📖</span>
+        <span class="kiosk-choice-text">
+          <span class="kiosk-choice-label">Borrow or return a book</span>
+          <span class="kiosk-choice-desc">Scan book barcode · then scan your card</span>
+        </span>
+      </button>
+    </div>
     <div id="normal-login-flow">
     <div class="role-toggle">
       <button class="role-btn active" id="role-student-btn" onclick="switchRole('student')">🎓 Student</button>
@@ -68,7 +80,7 @@
     <div class="login-hint">Staff: <code>admin@smartlib.edu</code> / <code>admin123</code> · Student sign-up: MedTech (<code>@medtech.tn</code> + dept) or MSB (<code>@msb.tn</code>); ID <code>###-####</code> for both.</div>
     </div>
     <div id="kiosk-wait-panel" class="login-card kiosk-wait-panel" style="display:none">
-      <h2 class="kiosk-wait-title">Library kiosk</h2>
+      <h2 class="kiosk-wait-title" id="kiosk-wait-title">Library kiosk</h2>
       <div id="kiosk-checkout-block">
         <p class="kiosk-wait-msg">Scan the <strong>book barcode</strong>, then your <strong>student card</strong>. Same flow to return a book you already have out.</p>
         <div class="kiosk-steps">
@@ -82,7 +94,8 @@
       </div>
       <p id="kiosk-seat-hint" class="kiosk-wait-msg" style="display:none">Scan your card to sign in briefly and pick a seat on the map.</p>
       <p id="kiosk-wait-status" class="kiosk-wait-status" aria-live="polite"></p>
-      <button type="button" class="login-btn login-btn-secondary" onclick="exitKioskToNormalLogin()">Use email / staff sign-in instead</button>
+      <button type="button" class="login-btn login-btn-secondary" onclick="backToKioskChoice()">← Back to menu</button>
+      <button type="button" class="link-button kiosk-wait-email-link" onclick="exitKioskToNormalLogin()">Sign in with email instead</button>
     </div>
   </div>
 </div>
